@@ -14,7 +14,7 @@ import jakarta.persistence.MapsId;
 import jakarta.persistence.Table;
 
 @Entity       
-@Table(name = "videoContainsArtist")  // database tables 
+@Table(name = "VideoContainsArtist")  // database tables 
 // by default hibernate tracks tables name underscored "_", so you need to place that at application.properties
 //  spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
 @JacksonXmlRootElement(localName = "videoContainsArtist")
