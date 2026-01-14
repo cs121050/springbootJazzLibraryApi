@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: ${DB_URL} #railway provides the database url as an environment variable
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+
+server:
+  port: ${PORT:8080} #tells railway to use its assigned port or default to 8080, railway is a cloud platform that i have my api deployed on.
