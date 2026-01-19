@@ -1,13 +1,14 @@
 package com.nicosarr.jazzLibraryAPI.VideoContainsArtist;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Video.Video;
 
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
-
+import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.MapsId;
@@ -23,14 +24,13 @@ public class VideoContainsArtist {
     @EmbeddedId
     private VideoContainsArtistId id;
 	
-	@ManyToOne
-	@JsonBackReference	
-    @MapsId("artistId")	
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("artistId")
     @JoinColumn(name = "artist_id", insertable = false, updatable = false)
-	private  Artist artist;
-	@ManyToOne
-	@JsonBackReference	
-    @MapsId("videoId")	
+    private Artist artist;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @MapsId("videoId")
     @JoinColumn(name = "video_id", insertable = false, updatable = false)
     private Video video;
 	
