@@ -1,24 +1,32 @@
 package com.nicosarr.jazzLibraryAPI.Video;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
-
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
+import jakarta.persistence.ForeignKey;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.Transient;
 
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Type.Type;
+import com.nicosarr.jazzLibraryAPI.Duration.Duration;
+
 import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
 
 @Entity
@@ -29,9 +37,6 @@ public class Video {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	
 	private int video_id;
-	
-    @Column(name = "duration_id")
-    private int duration_id;
     
     @Column(name = "video_name")    
     private String video_name;
@@ -42,72 +47,56 @@ public class Video {
     @Column(name = "video_path")    
     private String video_path;
     
-    @Column(name = "type_id")    
-    private int type_id;
-    
     @Column(name = "location_id")    
     private String location_id;
     
     @Column(name = "video_availability")    
     private String video_availability;
 
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+    		name = "duration_id", 
+    		referencedColumnName = "duration_id", 
+    		foreignKey = @ForeignKey(name = "FK_duration_id")
+    )
+    @JsonIgnore
+    private Duration duration; 
+    @Transient
+    private int duration_id;
+    
+	@ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+    		name = "type_id", 
+    		referencedColumnName = "type_id", 
+    		foreignKey = @ForeignKey(name = "FK_type_id")
+    )
+    @JsonIgnore
+    private Type type; 
+    @Transient    
+    private int type_id;
     
     @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
-    @JsonManagedReference 
-    @JsonIgnore     
-    private List<VideoContainsArtist> videoContainsArtists = new ArrayList<>();    
-    
-    @Transient  // This field is not stored in the database
-	 //@JsonManagedReference    
-     private List<Artist> artistList = new ArrayList<>();
-	
-	  // Getters and setters for the videos field
-    @JsonIgnore 
-	  public List<Artist> getArtistList() {
-	      return artistList;
-	  }
-	
-	
-	    public void setArtistList(List<Artist> artistList) {
-		this.artistList = artistList;
-	}
-	    @JsonIgnore 
+    private List<VideoContainsArtist> videoContainsArtists = new ArrayList<>();
 
-	public List<VideoContainsArtist> getVideoContainsArtists() {
-		return videoContainsArtists;
-	}
+    public Video () {
+    }
 
-	public void setVideoContainsArtists(List<VideoContainsArtist> videoContainsArtists) {
+	public Video(int video_id, String video_name, String video_duration, String video_path, String location_id,
+			String video_availability, Duration duration, int duration_id, Type type, int type_id,
+			List<VideoContainsArtist> videoContainsArtists) {
+		super();
+		this.video_id = video_id;
+		this.video_name = video_name;
+		this.video_duration = video_duration;
+		this.video_path = video_path;
+		this.location_id = location_id;
+		this.video_availability = video_availability;
+		this.duration = duration;
+		this.duration_id = duration_id;
+		this.type = type;
+		this.type_id = type_id;
 		this.videoContainsArtists = videoContainsArtists;
 	}
-
-    public Video () {}
-    public Video (int video_id, int duration_id, String video_name, String video_duration, String video_path,
-    		 int type_id, String location_id, String video_availability/*, String containedArtistsToObjectString*/){
-	   	
-    	this.video_id = video_id;
-	   	this.duration_id = duration_id;
-	   	this.video_name = video_name;
-	   	this.video_duration = video_duration;
-	   	this.video_path = video_path;
-	   	this.type_id = type_id;
-	   	this.location_id = location_id;
-	   	this.video_availability = video_availability;
-	   	//this.containedArtistsToObjectString = containedArtistsToObjectString;
-	   	
-    }
-    public Video (int duration_id, String video_name, String video_duration, String video_path,
-   		 int type_id, String location_id, String video_availability/*, String containedArtistsToObjectString*/){
-    	
-	   	this.duration_id = duration_id;
-	   	this.video_name = video_name;
-	   	this.video_duration = video_duration;
-	   	this.video_path = video_path;
-	   	this.type_id = type_id;
-	   	this.location_id = location_id;
-	   	this.video_availability = video_availability;
-	   	//this.containedArtistsToObjectString = containedArtistsToObjectString;
-    }    
 	public String toString(){
         return "duration_id:" + duration_id + "#video_name:" + video_name + "#video_duration:" + video_duration
         	+ "#video_path:" + video_path	 + "#type_id:" + type_id + "#location_id:" + location_id
@@ -118,10 +107,6 @@ public class Video {
             	+ "#" + video_path	 + "#" + type_id + "#" + location_id
             	+ "#" + video_availability  ;//+ "#" + containedArtistsToObjectString ;
     }  
-    public Video toObject(){
-        return new Video(this.duration_id, this.video_name, this.video_duration,
-	   	         this.video_path, this.type_id, this.location_id, this.video_availability);//, this.containedArtistsToObjectString);          
-    }
     
     
 	public int getVideo_id() {
@@ -130,9 +115,10 @@ public class Video {
 	public void setVideo_id(int video_id) {
 		this.video_id = video_id;
 	}
-	public int getDuration_id() {
-		return duration_id;
-	}
+    // Add getter for DURATION_id only
+    public int getDuration_id() {
+        return this.duration != null ? this.duration.getDuration_id() : 0;
+    }	
 	public void setDuration_id(int duration_id) {
 		this.duration_id = duration_id;
 	}
@@ -154,9 +140,11 @@ public class Video {
 	public void setVideo_path(String video_path) {
 		this.video_path = video_path;
 	}
-	public int getType_id() {
-		return type_id;
-	}
+	// Add getter for DURATION_id only
+    public int getType_id() {
+        return this.type != null ? this.type.getType_id() : 0;
+    }	
+	
 	public void setType_id(int type_id) {
 		this.type_id = type_id;
 	}
@@ -172,26 +160,24 @@ public class Video {
 	public void setVideo_availability(String video_availability) {
 		this.video_availability = video_availability;
 	}
-
+	public List<VideoContainsArtist> getVideoContainsArtists() {
+		return videoContainsArtists;
+	}
+	public void setVideoContainsArtists(List<VideoContainsArtist> videoContainsArtists) {
+		this.videoContainsArtists = videoContainsArtists;
+	}
+	// Add a transient field to get artists directly
+    @Transient
+    @JsonProperty("artists") // This will include artists in the JSON
+    public List<Artist> getArtists() {
+        if (videoContainsArtists == null) {
+            return new ArrayList<>();
+        }
+        return videoContainsArtists.stream()
+            .map(VideoContainsArtist::getArtist)
+            .collect(Collectors.toList());
+    }
 }
 
-@JacksonXmlRootElement(localName = "videoArrayListManager")
-class VideoArrayListManager {
-	
-	private ArrayList<Video> videoList;
-
-    public VideoArrayListManager() {
-    	videoList = new ArrayList<>();
-    }
-
-    public void addVideo(Video video) {
-    	videoList.add(video);
-    }
-
-    public ArrayList<Video> getVideo() {
-        return videoList;			
-    }  		
-	
-}
 
 
