@@ -18,9 +18,6 @@ spring:
     init:
       mode: always
       data-locations: classpath:data_prod.sql
-      # Optional: Add schema initialization if needed
-      schema-locations: classpath:schema_prod.sql
-      # Platform detection is now automatic based on the JDBC driver
 
 server:
   port: ${PORT:8080}
