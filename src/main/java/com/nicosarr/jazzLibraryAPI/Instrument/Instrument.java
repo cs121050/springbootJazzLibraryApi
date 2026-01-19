@@ -1,13 +1,21 @@
 package com.nicosarr.jazzLibraryAPI.Instrument;
 import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.OneToMany;
+
+import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 
 @Entity
 @Table(name = "Instrument")  // database tables
@@ -16,57 +24,27 @@ public class Instrument {
     
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	
+    @Column(name = "instrument_id")
 	private int instrument_id;
-    private String instrument_name;
-    private int instrument_artist_count;
-    private int instrument_video_count;        
+    
+    @Column(name = "instrument_name")
+	private String instrument_name;
 
-    public int getInstrument_video_count() {
-		return instrument_video_count;
-	}
-	public void setInstrument_video_count(int instrument_video_count) {
-		this.instrument_video_count = instrument_video_count;
-	}
-	public Instrument () {}	
-	
-	public Instrument (int instrument_id, String instrument_name, int instrument_artist_count, int instrument_video_count){
+    @OneToMany(mappedBy = "instrument", fetch = FetchType.LAZY)
+    @JsonBackReference
+    @JsonIgnore
+    private List<Artist> artists = new ArrayList<>();
+    
+	public Instrument () {
+	}	
+	public Instrument (int instrument_id, String instrument_name){
 	   	this.instrument_id = instrument_id;
-	   	this.instrument_name = instrument_name;
-	   	this.instrument_artist_count = instrument_artist_count;
-	   	this.instrument_video_count = instrument_video_count;	   	
+	   	this.instrument_name = instrument_name;   	
     }
-    public Instrument (int instrument_id, String instrument_name, int instrument_artist_count){
-	   	this.instrument_id = instrument_id;
-	   	this.instrument_name = instrument_name;
-	   	this.instrument_artist_count = instrument_artist_count;
-	   	this.instrument_video_count = 0;	   	
-    }
-    public Instrument (String instrument_name, int instrument_artist_count, int instrument_video_count){
- 	   	this.instrument_name = instrument_name;
-	   	this.instrument_artist_count = instrument_artist_count; 	
-	   	this.instrument_video_count = instrument_video_count;		   	
-    }   
-    public Instrument (String instrument_name, int instrument_artist_count){
- 	   	this.instrument_name = instrument_name;
-	   	this.instrument_artist_count = instrument_artist_count;
-	   	this.instrument_video_count = 0;	   	
-    }       
     public Instrument (String instrument_name){
- 	   	this.instrument_name = instrument_name;
-	   	this.instrument_artist_count = 0; 	
-	   	this.instrument_video_count = 0;	   	
-    }      
-	public String toString(){
-        return "instrument_id:" + instrument_id + "#instrument_name:" + instrument_name+ "#instrument_artist_count:" + instrument_artist_count+ "#instrument_video_count:" + instrument_video_count;
-    }   
-    public String valuesToString(){
-        return instrument_id + "#" + instrument_name + "#" + instrument_artist_count+ "#" + instrument_video_count;
-    }      
-    public Instrument toObject(){
-        return new Instrument(this.instrument_id, this.instrument_name, this.instrument_artist_count, this.instrument_video_count);          
-    }
-    
-    
+ 	   	this.instrument_name = instrument_name;   	
+    }     
+
 	public int getInstrument_id() {
 		return instrument_id;
 	}
@@ -79,34 +57,11 @@ public class Instrument {
 	public void setInstrument_name(String instrument_name) {
 		this.instrument_name = instrument_name;
 	}
-	public int getInstrument_artist_count() {
-		return instrument_artist_count;
-	}
-	public void setInstrument_artist_count(int instrument_artist_count) {
-		this.instrument_artist_count = instrument_artist_count;
-	}
-
-	
-	
-	
-}
-
-@JacksonXmlRootElement(localName = "instrumentArrayListManager")
-class InstrumentArrayListManager {
-
-    private ArrayList<Instrument> instrumentList;
-
-    public InstrumentArrayListManager() {
-    	instrumentList = new ArrayList<>();
+    public List<Artist> getArtists() {
+        return artists;
     }
-
-    public void addInstrument(Instrument instrument) {
-    	instrumentList.add(instrument);
+    public void setArtists(List<Artist> artists) {
+        this.artists = artists;
     }
-
-    public ArrayList<Instrument> getInstrument() {
-        return instrumentList;
-    }  
-   	
 }
 

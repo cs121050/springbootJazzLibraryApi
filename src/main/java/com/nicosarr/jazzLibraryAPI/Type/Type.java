@@ -1,14 +1,21 @@
 package com.nicosarr.jazzLibraryAPI.Type;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Video.Video;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 
@@ -21,32 +28,21 @@ public class Type {
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	
 	private int type_id;
     @Column(name = "type_name")
-	private String type_name;
-    @Column(name = "type_video_count")	      
-    private int type_video_count;    
- 
-    public Type () {}	
-    public Type (int type_id, String type_name, int type_video_count){
-	   	this.type_id = type_id;
-	   	
-	   	this.type_name = type_name;
- 	
-	   	this.type_video_count = type_video_count;
-    }
-    public Type (String type_name, int type_video_count){
- 	   	this.type_name = type_name;
- 		this.type_video_count = type_video_count;	
-    }    
-	public String toString(){
-        return "type_id:" + type_id + "#type_name:" + type_name+ "#type_video_count:" + type_video_count;
-    }   
-    public String valuesToString(){
-        return type_id + "#" + type_name + "#" + type_video_count;
-    }  
-    public Type toObject(){
-        return new Type(this.type_id, this.type_name, this.type_video_count);          
-    }
+	private String type_name; 
     
+    @OneToMany(mappedBy = "type", fetch = FetchType.LAZY)
+    @JsonBackReference
+    @JsonIgnore
+    private List<Video> videos = new ArrayList<>();
+    
+    
+    public Type () {
+    }	
+	public Type(int type_id, String type_name) {
+		this.type_id = type_id;
+		this.type_name = type_name;
+	}
+
 	public int getType_id() {
 		return type_id;
 	}
@@ -59,32 +55,18 @@ public class Type {
 	public void setType_name(String type_name) {
 		this.type_name = type_name;
 	}
-	public int getType_video_count() {
-		return type_video_count;
+	public List<Video> getVideos() {
+		return videos;
 	}
-	public void setType_video_count(int type_video_count) {
-		this.type_video_count = type_video_count;
+	public void setVideos(List<Video> videos) {
+		this.videos = videos;
 	}
 
+	@Override
+	public String toString() {
+		return "Type [type_id=" + type_id + ", type_name=" + type_name + ", videos=" + videos + "]";
+	}
 	
 	
-}
 
-@JacksonXmlRootElement(localName = "typeArrayListManager")
-class TypeArrayListManager {
-
-	private ArrayList<Type> typeList;
-
-    public TypeArrayListManager() {
-    	typeList = new ArrayList<>();
-    }
-
-    public void addType(Type type) {
-    	typeList.add(type);
-    }
-
-    public ArrayList<Type> getType() {
-        return typeList;			
-    }  	
-	
 }

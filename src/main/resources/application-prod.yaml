@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: ${DB_URL} #railway provides the database url as an environment variable
+    url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
@@ -12,6 +12,15 @@ spring:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
     open-in-view: false
+    defer-datasource-initialization: true # Important: Wait with data initialization until after JPA
+  
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data_prod.sql
+      # Optional: Add schema initialization if needed
+      schema-locations: classpath:schema_prod.sql
+      # Platform detection is now automatic based on the JDBC driver
 
 server:
-  port: ${PORT:8080} #tells railway to use its assigned port or default to 8080, railway is a cloud platform that i have my api deployed on.
+  port: ${PORT:8080}
