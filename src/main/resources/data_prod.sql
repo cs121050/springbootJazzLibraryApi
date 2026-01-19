@@ -1,3 +1,13 @@
+	-- data.sql
+	-- Clear existing data first (optional)
+	DELETE FROM VideoContainsArtist;
+	DELETE FROM Video;
+	DELETE FROM Artist;
+	DELETE FROM Instrument;
+	DELETE FROM Duration;
+	DELETE FROM Type;
+	DELETE FROM Quote;
+	
 -- INSERT INTO instruments first (if you have an Instrument table);
 INSERT INTO instrument (instrument_name) VALUES ('bass');
 INSERT INTO instrument (instrument_name) VALUES ('guitar');
