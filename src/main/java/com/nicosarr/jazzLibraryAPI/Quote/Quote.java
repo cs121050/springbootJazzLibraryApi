@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Instrument.Instrument;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -70,9 +71,11 @@ public class Quote {
 		this.quote_id = quote_id;
 	}
     // Add getter for instrument_id only
+    @JsonProperty("artist_id")
     public int getArtist_id() {
         return this.artist != null ? this.artist.getArtist_id() : 0;
     }
+    @JsonProperty("artist_id")
 	public void setArtist_id(int artist_id) {
 		this.artist_id = artist_id;
 	}

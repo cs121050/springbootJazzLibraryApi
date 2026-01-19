@@ -7,17 +7,19 @@ spring:
 
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create  # This creates tables from entities
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
     open-in-view: false
-    defer-datasource-initialization: true # Important: Wait with data initialization until after JPA
+    defer-datasource-initialization: true  # Wait for JPA to create tables first
   
   sql:
     init:
       mode: always
       data-locations: classpath:data_prod.sql
+      continue-on-error: true   
+      platform: postgresql  # Add this!
 
 server:
   port: ${PORT:8080}
