@@ -103,9 +103,11 @@ public class Artist {
 		this.instrument = instrument;
 	}
     // Add getter for instrument_id only
+    @JsonProperty("instrument_id")
     public int getInstrument_id() {
         return this.instrument != null ? this.instrument.getInstrument_id() : 0;
     }
+    @JsonProperty("instrument_id")
 	public void setInstrument_id(int instrument_id) {
 		this.instrument_id = instrument_id;
 	}
