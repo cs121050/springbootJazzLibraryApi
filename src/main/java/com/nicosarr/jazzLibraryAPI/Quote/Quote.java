@@ -71,11 +71,9 @@ public class Quote {
 		this.quote_id = quote_id;
 	}
     // Add getter for instrument_id only
-    @JsonProperty("artist_id")
     public int getArtist_id() {
         return this.artist != null ? this.artist.getArtist_id() : 0;
     }
-    @JsonProperty("artist_id")
 	public void setArtist_id(int artist_id) {
 		this.artist_id = artist_id;
 	}
