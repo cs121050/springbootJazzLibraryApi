@@ -21,5 +21,10 @@ spring:
       continue-on-error: true   
       platform: postgresql  # Add this!
 
+  transaction:
+    default-timeout: 90  # Transaction timeout in seconds
+    rollback-on-commit-failure: true  # Rollback transaction if commit failsn
+
 server:
   port: ${PORT:8080}
+	
