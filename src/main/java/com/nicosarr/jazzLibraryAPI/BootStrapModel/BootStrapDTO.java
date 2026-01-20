@@ -11,6 +11,7 @@ import com.nicosarr.jazzLibraryAPI.Instrument.Instrument;
 import com.nicosarr.jazzLibraryAPI.Instrument.InstrumentDTO;
 import com.nicosarr.jazzLibraryAPI.Video.Video;
 import com.nicosarr.jazzLibraryAPI.Video.VideoDTO;
+import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistDTO;
 import com.nicosarr.jazzLibraryAPI.Type.Type;
 import com.nicosarr.jazzLibraryAPI.Type.TypeDTO;
 import com.nicosarr.jazzLibraryAPI.Duration.Duration;
@@ -27,17 +28,19 @@ public class BootStrapDTO {
 	private List<VideoDTO> videoList;
 	private List<ArtistDTO> artistList;	
 	private List<QuoteDTO> quoteList;
+	private List<VideoContainsArtistDTO> videoContainsArtistList;
 	
 	public BootStrapDTO() {
 	}
 	public BootStrapDTO(List<InstrumentDTO> instrumentList, List<TypeDTO> typeList, List<DurationDTO> durationList,
-			List<VideoDTO> videoList, List<ArtistDTO> artistList, List<QuoteDTO> quoteList) {
+			List<VideoDTO> videoList, List<ArtistDTO> artistList, List<QuoteDTO> quoteList, List<VideoContainsArtistDTO> videoContainsArtistList) {
 		this.instrumentList = instrumentList;
 		this.typeList = typeList;
 		this.durationList = durationList;
 		this.videoList = videoList;
 		this.artistList = artistList;
 		this.quoteList = quoteList;
+		this.videoContainsArtistList = videoContainsArtistList;
 	}
 	public List<InstrumentDTO> getInstrumentList() {
 		return instrumentList;
@@ -74,6 +77,12 @@ public class BootStrapDTO {
 	}
 	public void setQuoteList(List<QuoteDTO> quoteList) {
 		this.quoteList = quoteList;
+	}
+	public List<VideoContainsArtistDTO> getVideoContainsArtistList() {
+		return videoContainsArtistList;
+	}
+	public void setVideoContainsArtistList(List<VideoContainsArtistDTO> videoContainsArtistList) {
+		this.videoContainsArtistList = videoContainsArtistList;
 	}
 	
 }

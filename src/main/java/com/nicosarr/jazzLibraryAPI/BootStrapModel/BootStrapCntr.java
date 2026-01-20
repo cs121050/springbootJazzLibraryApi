@@ -28,6 +28,8 @@ import com.nicosarr.jazzLibraryAPI.Type.TypeRep;
 import com.nicosarr.jazzLibraryAPI.Video.Video;
 import com.nicosarr.jazzLibraryAPI.Video.VideoDTO;
 import com.nicosarr.jazzLibraryAPI.Video.VideoRep;
+import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistDTO;
+import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistRep;
 
 import jakarta.annotation.PostConstruct;
 
@@ -52,6 +54,9 @@ public class BootStrapCntr {
     
     @Autowired
     private QuoteRep quoteRepository;
+    
+    @Autowired
+    private VideoContainsArtistRep videoContainsArtistRepository;
 	
 	@GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public BootStrapDTO getAllData() {
@@ -62,6 +67,7 @@ public class BootStrapCntr {
         List<VideoDTO> videoDTOs = videoRepository.retrieveAll();
         List<ArtistDTO> artistDTOs = artistRepository.retrieveAll();
         List<QuoteDTO> quoteDTOs = quoteRepository.retrieveAll();
+        List<VideoContainsArtistDTO> videoContainsArtistDTOs = videoContainsArtistRepository.retrieveAll();
         
         // Create and return bootstrap DTO
         return new BootStrapDTO(
@@ -70,7 +76,8 @@ public class BootStrapCntr {
             durationDTOs,
             videoDTOs,
             artistDTOs,
-            quoteDTOs
+            quoteDTOs,
+            videoContainsArtistDTOs
         );
     }
 	
