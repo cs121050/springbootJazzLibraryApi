@@ -1,13 +1,13 @@
 package com.nicosarr.jazzLibraryAPI.VideoContainsArtist;
 
 public class VideoContainsArtistDTO {
-    private int video_id;
     private int artist_id;
+    private int video_id;
 
     // Constructors
     public VideoContainsArtistDTO() {}
 
-    public VideoContainsArtistDTO(int video_id, int artist_id) {
+    public VideoContainsArtistDTO(int artist_id, int video_id) {
         this.video_id = video_id;
         this.artist_id = artist_id;
     }
