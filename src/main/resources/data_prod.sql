@@ -1,3 +1,4 @@
+--POSGRE SQL
 	-- data.sql
 	-- Clear existing data first (optional)
 	DELETE FROM VideoContainsArtist;
