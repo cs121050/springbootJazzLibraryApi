@@ -28,6 +28,9 @@ public class Duration {
 	
     @Column(name = "duration_name")	      
 	private String duration_name;
+    
+    @Column(name = "duration_description")	      
+	private String duration_description;
 	
     @OneToMany(mappedBy = "duration", fetch = FetchType.LAZY)
     @JsonBackReference
@@ -35,13 +38,18 @@ public class Duration {
     private List<Video> video = new ArrayList<>();
     
     public Duration () {}
-    public Duration (int duration_id, String duration_name){
+    public Duration (int duration_id, String duration_name, String duration_description){
 	   	this.duration_id = duration_id;
 	   	this.duration_name = duration_name;
+	   	this.duration_description = duration_description;
     }  
     public Duration (String duration_name){
  	   	this.duration_name = duration_name;
     }        
+    public Duration (int duration_id, String duration_name){
+	   	this.duration_id = duration_id;
+	   	this.duration_name = duration_name;
+	}
 	public String toString(){
         return "duration_id:" + duration_id + "#duration_name:" + duration_name+ "#duration_video_count:";
     }   
@@ -69,5 +77,12 @@ public class Duration {
 	public void setVideo(List<Video> video) {
 		this.video = video;
 	}
+	public String getDuration_description() {
+		return duration_description;
+	}
+	public void setDuration_description(String duration_description) {
+		this.duration_description = duration_description;
+	}
+	
 
 }
