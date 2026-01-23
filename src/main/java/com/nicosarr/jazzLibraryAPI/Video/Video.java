@@ -26,7 +26,7 @@ import jakarta.persistence.Transient;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Type.Type;
 import com.nicosarr.jazzLibraryAPI.Duration.Duration;
-
+import com.nicosarr.jazzLibraryAPI.Quote.Quote;
 import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
 
 @Entity
@@ -75,6 +75,11 @@ public class Video {
     @Transient    
     private int type_id;
     
+ // Add this new relationship for quotes
+    @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
+    @JsonIgnore // To prevent circular references in JSON
+    private List<Quote> quotes = new ArrayList<>();
+    
     @OneToMany(mappedBy = "video", fetch = FetchType.LAZY)
     private List<VideoContainsArtist> videoContainsArtists = new ArrayList<>();
 
@@ -97,6 +102,15 @@ public class Video {
 		this.type_id = type_id;
 		this.videoContainsArtists = videoContainsArtists;
 	}
+	
+	public Video(int video_id, String video_name, String video_duration, String video_path, String location_id,
+			String video_availability, Duration duration, int duration_id, Type type, int type_id,
+			List<VideoContainsArtist> videoContainsArtists, List<Quote> quotes) {
+		this(video_id, video_name, video_duration, video_path, location_id, video_availability, 
+			 duration, duration_id, type, type_id, videoContainsArtists);
+		this.quotes = quotes != null ? quotes : new ArrayList<>();
+	}
+	
 	public String toString(){
         return "duration_id:" + duration_id + "#video_name:" + video_name + "#video_duration:" + video_duration
         	+ "#video_path:" + video_path	 + "#type_id:" + type_id + "#location_id:" + location_id
