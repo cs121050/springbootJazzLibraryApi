@@ -10,6 +10,7 @@ import com.nicosarr.jazzLibraryAPI.Artist.ArtistWithVideoDTO;
 public class VideoDTO {
     private int video_id;
     private String video_name;
+    private String video_duration;
     private String video_path;
     private String location_id;
     private String video_availability;
@@ -19,10 +20,11 @@ public class VideoDTO {
     // Constructors
     public VideoDTO() {}
 
-	public VideoDTO(int video_id, String video_name, String video_path, String location_id,
+	public VideoDTO(int video_id, String video_name, String video_duration, String video_path, String location_id,
 					String video_availability, int type_id,  int duration_id) {
 		this.video_id = video_id;
 		this.video_name = video_name;
+		this.video_duration = video_duration;
 		this.video_path = video_path;
 		this.location_id = location_id;
 		this.video_availability = video_availability;
@@ -34,6 +36,7 @@ public class VideoDTO {
         VideoDTO dto = new VideoDTO(
             video.getVideo_id(),
             video.getVideo_name(),
+            video.getVideo_duration(),
             video.getVideo_path(),
             video.getLocation_id(),
             video.getVideo_availability(),
@@ -100,5 +103,15 @@ public class VideoDTO {
 	public void setType_id(int type_id) {
 		this.type_id = type_id;
 	}
+
+	public String getVideo_duration() {
+		return video_duration;
+	}
+
+	public void setVideo_duration(String video_Duration) {
+		this.video_duration = video_Duration;
+	}
+    
+	
 
 }
