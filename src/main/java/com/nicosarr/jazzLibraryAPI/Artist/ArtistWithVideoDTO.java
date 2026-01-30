@@ -43,6 +43,7 @@ public class ArtistWithVideoDTO {
                     VideoWithArtistDTO videoDTO = new VideoWithArtistDTO(
                         vca.getVideo().getVideo_id(),
                         vca.getVideo().getVideo_name(),
+                        vca.getVideo().getVideo_duration(),
                         vca.getVideo().getVideo_path(),
                         vca.getVideo().getLocation_id(),
                         vca.getVideo().getVideo_availability(),
