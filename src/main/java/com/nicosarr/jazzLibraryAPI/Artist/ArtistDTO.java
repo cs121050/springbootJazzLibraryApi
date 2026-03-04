@@ -11,17 +11,21 @@ public class ArtistDTO {
     private String artist_surname;
     private Integer artist_rank;
     private int instrument_id;
+    private String musicbrainz_uuid;
+    private String spotify_playlist_id;
 
     // Constructors
     public ArtistDTO() {}
 
     public ArtistDTO(int artist_id, String artist_name, String artist_surname, 
-                     Integer artist_rank, int instrument_id) {
+                     Integer artist_rank, int instrument_id, String musicbrainz_uuid, String spotify_playlist_id) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
         this.artist_rank = artist_rank;
         this.instrument_id = instrument_id;
+        this.musicbrainz_uuid = musicbrainz_uuid;
+        this.spotify_playlist_id = spotify_playlist_id;
     }
 
  // Static factory method to convert from Entity
@@ -31,7 +35,9 @@ public class ArtistDTO {
             artist.getArtist_name(),
             artist.getArtist_surname(),
             artist.getArtist_rank(),
-            artist.getInstrument_id()
+            artist.getInstrument_id(),
+            artist.getMusicbrainz_uuid(),
+            artist.getSpotify_playlist_id()
         );
         return dto;
     }
@@ -76,5 +82,21 @@ public class ArtistDTO {
     public void setInstrument_id(int instrument_id) {
         this.instrument_id = instrument_id;
     }
+    
+    public String getMusicbrainz_uuid() {
+		return musicbrainz_uuid;
+	}
+     
+    public void setMusicbrainz_uuid(String musicbrainz_uuid) {
+		this.musicbrainz_uuid = musicbrainz_uuid;
+	}
 
+	public String getSpotify_playlist_id() {
+		return spotify_playlist_id;
+	}
+
+	public void setSpotify_playlist_id(String spotify_playlist_id) {
+		this.spotify_playlist_id = spotify_playlist_id;
+	}
+    
 }
