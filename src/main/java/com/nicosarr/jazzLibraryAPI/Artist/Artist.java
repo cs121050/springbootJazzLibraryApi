@@ -38,6 +38,12 @@ public class Artist {
     @Column(name = "artist_rank")    
     private Integer  artist_rank;    
     
+    @Column(name = "musicbrainz_uuid")    
+    private String  musicbrainz_uuid; 
+    
+    @Column(name = "spotify_playlist_id")    
+    private String  spotify_playlist_id; 
+    
     @ManyToOne(fetch = FetchType.LAZY)  // This makes it lazy loaded
     @JoinColumn(
     		name = "instrument_id", 
@@ -57,19 +63,22 @@ public class Artist {
     
 	public Artist() {
 	}
-    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank){
+    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id){
 	   	this.artist_id = artist_id;
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
 	   	this.instrument_id = instrument_id;	   	
-	   	this.artist_rank= artist_rank;		   	
+	   	this.artist_rank= artist_rank;	
+	   	this.musicbrainz_uuid = musicbrainz_uuid;
+	   	this.spotify_playlist_id = spotify_playlist_id;
     }
-    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank){
+    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id){
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
 	   	this.instrument_id = instrument_id;	   	
-	   	this.artist_rank= artist_rank;	   		
-	   	
+	   	this.artist_rank= artist_rank;	   
+	   	this.musicbrainz_uuid = musicbrainz_uuid;
+	   	this.spotify_playlist_id = spotify_playlist_id;
     }    
     public Artist (String artist_name, String artist_surname, int instrument_id){
 	   	this.artist_name = artist_name;
@@ -133,16 +142,32 @@ public class Artist {
             .map(VideoContainsArtist::getVideo)
             .collect(Collectors.toList());
     }
-	   
-	public String toString(){
-        return "artist_id:" + artist_id + "#artist_name:" + artist_name + "#artist_surname:" + artist_surname 
-          + "#instrument_id:" + instrument_id+ "#artist_rank:" + artist_rank;
-    }  
-    public String valuesToString(){
-        return artist_id + "#" + artist_name + "#" + artist_surname + "#" + instrument_id +"#"+artist_rank;
-    }        
-    public Artist toObject(){
-         return new Artist(this.artist_id, this.artist_name, this.artist_surname, this.instrument_id, this.artist_rank);   
-    }  
+
+	@Override
+	public String toString() {
+		return "Artist [artist_id=" + artist_id + ", artist_name=" + artist_name + ", artist_surname=" + artist_surname
+				+ ", artist_rank=" + artist_rank + ", musicbrainz_uuid=" + musicbrainz_uuid + ", spotify_playlist_id="
+				+ spotify_playlist_id + ", instrument=" + instrument + ", instrument_id=" + instrument_id
+				+ ", videoContainsArtists=" + videoContainsArtists + ", quotes=" + quotes + "]";
+	}
+	public String getMusicbrainz_uuid() {
+		return musicbrainz_uuid;
+	}
+	public void setMusicbrainz_uuid(String musicbrainz_uuid) {
+		this.musicbrainz_uuid = musicbrainz_uuid;
+	}
+	public String getSpotify_playlist_id() {
+		return spotify_playlist_id;
+	}
+	public void setSpotify_playlist_id(String spotify_playlist_id) {
+		this.spotify_playlist_id = spotify_playlist_id;
+	}
+	public List<Quote> getQuotes() {
+		return quotes;
+	}
+	public void setQuotes(List<Quote> quotes) {
+		this.quotes = quotes;
+	}
+	
 }
 
