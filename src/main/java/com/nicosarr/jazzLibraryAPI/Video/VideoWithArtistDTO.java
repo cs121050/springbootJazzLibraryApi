@@ -58,7 +58,8 @@ public class VideoWithArtistDTO {
                         vca.getArtist().getArtist_rank(),
                         vca.getArtist().getInstrument_id(),
                         vca.getArtist().getMusicbrainz_uuid(),
-                        vca.getArtist().getSpotify_playlist_id()
+                        vca.getArtist().getSpotify_playlist_id(),
+                        vca.getArtist().getDiscogs_id()
                     );
                     dto.getArtists().add(artistDTO);
                 }
