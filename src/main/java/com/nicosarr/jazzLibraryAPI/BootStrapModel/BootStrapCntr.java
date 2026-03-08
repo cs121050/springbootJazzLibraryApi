@@ -10,6 +10,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nicosarr.jazzLibraryAPI.Album.AlbumDTO;
+import com.nicosarr.jazzLibraryAPI.Album.AlbumRep;
+import com.nicosarr.jazzLibraryAPI.AlbumContainsArtist.AlbumContainsArtistDTO;
+import com.nicosarr.jazzLibraryAPI.AlbumContainsArtist.AlbumContainsArtistRep;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Artist.ArtistDTO;
 import com.nicosarr.jazzLibraryAPI.Artist.ArtistRep;
@@ -50,13 +54,20 @@ public class BootStrapCntr {
     private DurationRep durationRepository;
     
     @Autowired
-    private VideoRep videoRepository;
-    
-    @Autowired
     private QuoteRep quoteRepository;
     
     @Autowired
+    private VideoRep videoRepository;
+    
+    @Autowired
     private VideoContainsArtistRep videoContainsArtistRepository;
+    
+    @Autowired
+    private AlbumRep albumRepository;
+    
+    @Autowired
+    private AlbumContainsArtistRep albumContainsArtistRepository;
+    
 	
 	@GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public BootStrapDTO getAllData() {
@@ -64,20 +75,24 @@ public class BootStrapCntr {
         List<InstrumentDTO> instrumentDTOs = instrumentRepository.retrieveAll();
         List<TypeDTO> typeDTOs = typeRepository.retrieveAll();
         List<DurationDTO> durationDTOs = durationRepository.retrieveAll();
-        List<VideoDTO> videoDTOs = videoRepository.retrieveAll();
         List<ArtistDTO> artistDTOs = artistRepository.retrieveAll();
         List<QuoteDTO> quoteDTOs = quoteRepository.retrieveAll();
+        List<VideoDTO> videoDTOs = videoRepository.retrieveAll();
         List<VideoContainsArtistDTO> videoContainsArtistDTOs = videoContainsArtistRepository.retrieveAll();
+        List<AlbumDTO> albumDTOs = albumRepository.retrieveAll();
+        List<AlbumContainsArtistDTO> albumContainsArtistDTOs = albumContainsArtistRepository.retrieveAll();
         
         // Create and return bootstrap DTO
         return new BootStrapDTO(
             instrumentDTOs,
             typeDTOs,
             durationDTOs,
-            videoDTOs,
             artistDTOs,
             quoteDTOs,
-            videoContainsArtistDTOs
+            videoDTOs,
+            videoContainsArtistDTOs,
+            albumDTOs,
+            albumContainsArtistDTOs
         );
     }
 	
