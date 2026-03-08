@@ -29,6 +29,9 @@ public class Artist {
     @Column(name = "artist_id")	
     private int artist_id;
 	
+	@Column(name = "discogs_id", unique = true)	
+    private Integer discogs_id;
+	
     @Column(name = "artist_name")
     private String artist_name;
     
@@ -63,7 +66,7 @@ public class Artist {
     
 	public Artist() {
 	}
-    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id){
+    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id){
 	   	this.artist_id = artist_id;
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
@@ -71,14 +74,16 @@ public class Artist {
 	   	this.artist_rank= artist_rank;	
 	   	this.musicbrainz_uuid = musicbrainz_uuid;
 	   	this.spotify_playlist_id = spotify_playlist_id;
+	   	this.discogs_id = discogs_id;	   	
     }
-    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id){
+    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id){
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
 	   	this.instrument_id = instrument_id;	   	
 	   	this.artist_rank= artist_rank;	   
 	   	this.musicbrainz_uuid = musicbrainz_uuid;
 	   	this.spotify_playlist_id = spotify_playlist_id;
+	   	this.discogs_id = discogs_id;
     }    
     public Artist (String artist_name, String artist_surname, int instrument_id){
 	   	this.artist_name = artist_name;
@@ -167,6 +172,12 @@ public class Artist {
 	}
 	public void setQuotes(List<Quote> quotes) {
 		this.quotes = quotes;
+	}
+	public Integer getDiscogs_id() {
+		return discogs_id;
+	}
+	public void setDiscogs_id(Integer discogs_id) {
+		this.discogs_id = discogs_id;
 	}
 	
 }

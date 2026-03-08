@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Map;
 
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.nicosarr.jazzLibraryAPI.Album.AlbumDTO;
+import com.nicosarr.jazzLibraryAPI.AlbumContainsArtist.AlbumContainsArtistDTO;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Artist.ArtistDTO;
 import com.nicosarr.jazzLibraryAPI.Instrument.Instrument;
@@ -29,18 +31,23 @@ public class BootStrapDTO {
 	private List<ArtistDTO> artistList;	
 	private List<QuoteDTO> quoteList;
 	private List<VideoContainsArtistDTO> videoContainsArtistList;
+	private List<AlbumDTO> albumList;
+	private List<AlbumContainsArtistDTO> albumContainsArtistList;
+
 	
 	public BootStrapDTO() {
 	}
-	public BootStrapDTO(List<InstrumentDTO> instrumentList, List<TypeDTO> typeList, List<DurationDTO> durationList,
-			List<VideoDTO> videoList, List<ArtistDTO> artistList, List<QuoteDTO> quoteList, List<VideoContainsArtistDTO> videoContainsArtistList) {
+	public BootStrapDTO(List<InstrumentDTO> instrumentList, List<TypeDTO> typeList, List<DurationDTO> durationList, List<ArtistDTO> artistList, List<QuoteDTO> quoteList,
+			List<VideoDTO> videoList, List<VideoContainsArtistDTO> videoContainsArtistList, List<AlbumDTO> albumList, List<AlbumContainsArtistDTO> albumContainsArtistList) {
 		this.instrumentList = instrumentList;
 		this.typeList = typeList;
 		this.durationList = durationList;
-		this.videoList = videoList;
 		this.artistList = artistList;
 		this.quoteList = quoteList;
+		this.videoList = videoList;
 		this.videoContainsArtistList = videoContainsArtistList;
+		this.albumList = albumList;
+		this.albumContainsArtistList = albumContainsArtistList;
 	}
 	public List<InstrumentDTO> getInstrumentList() {
 		return instrumentList;
@@ -83,6 +90,18 @@ public class BootStrapDTO {
 	}
 	public void setVideoContainsArtistList(List<VideoContainsArtistDTO> videoContainsArtistList) {
 		this.videoContainsArtistList = videoContainsArtistList;
+	}
+	public List<AlbumDTO> getAlbumList() {
+		return albumList;
+	}
+	public void setAlbumList(List<AlbumDTO> albumList) {
+		this.albumList = albumList;
+	}
+	public List<AlbumContainsArtistDTO> getAlbumContainsArtistList() {
+		return albumContainsArtistList;
+	}
+	public void setAlbumContainsArtistList(List<AlbumContainsArtistDTO> albumContainsArtistList) {
+		this.albumContainsArtistList = albumContainsArtistList;
 	}
 	
 }
