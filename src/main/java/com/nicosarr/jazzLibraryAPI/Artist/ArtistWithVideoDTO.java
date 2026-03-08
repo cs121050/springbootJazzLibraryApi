@@ -14,12 +14,13 @@ public class ArtistWithVideoDTO {
     private List<VideoWithArtistDTO> videos = new ArrayList<>();
     private String musicbrainz_uuid;
     private String spotify_playlist_id;
+    private Integer discogs_id;
 
     // Constructors
     public ArtistWithVideoDTO() {}
 
     public ArtistWithVideoDTO(int artist_id, String artist_name, String artist_surname, 
-                     Integer artist_rank, int instrument_id, String musicbrainz_uuid, String spotify_playlist_id) {
+                     Integer artist_rank, int instrument_id, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -27,6 +28,7 @@ public class ArtistWithVideoDTO {
         this.instrument_id = instrument_id;
         this.musicbrainz_uuid = musicbrainz_uuid;
         this.spotify_playlist_id = spotify_playlist_id;
+        this.discogs_id = discogs_id;
     }
 
  // Static factory method to convert from Entity
@@ -38,7 +40,8 @@ public class ArtistWithVideoDTO {
             artist.getArtist_rank(),
             artist.getInstrument_id(),
             artist.getMusicbrainz_uuid(),
-            artist.getSpotify_playlist_id()
+            artist.getSpotify_playlist_id(),
+            artist.getDiscogs_id()
         );
         
         // Convert artists if they exist
@@ -128,5 +131,14 @@ public class ArtistWithVideoDTO {
 	public void setSpotify_playlist_id(String spotify_playlist_id) {
 		this.spotify_playlist_id = spotify_playlist_id;
 	}
+
+	public Integer getDiscogs_id() {
+		return discogs_id;
+	}
+
+	public void setDiscogs_id(Integer discogs_id) {
+		this.discogs_id = discogs_id;
+	}
+	
 	    
 }
