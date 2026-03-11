@@ -1,16 +1,18 @@
 ﻿<#
 .SYNOPSIS
     Fetches MusicBrainz studio albums for artists listed in an SQL file,
-    outputting one JSON object per album in JSON Lines format.
+    adds a small cover image URL from the Cover Art Archive, and outputs
+    one JSON object per album in JSON Lines format.
 
 .DESCRIPTION
     This script reads an SQL file (e.g., an INSERT dump of an Artist table),
-    extracts all MusicBrainz artist MBIDs (UUIDs) using a simple regex,
-    queries the MusicBrainz API for each artist's release groups,
-    filters to keep only release groups with primary type "Album" and no secondary types,
-    retrieves the release group metadata (including artist credits, URLs, first release date),
-    and writes each album as a JSON line to the output file.
-    It respects MusicBrainz rate limits (1 request per second).
+    extracts all MusicBrainz artist MBIDs, queries the MusicBrainz API for
+    each artist's release groups, filters to keep only studio albums (primary
+    type "Album" and no secondary types), retrieves the release group metadata,
+    and then attempts to fetch a 250px thumbnail from the Cover Art Archive.
+    Each album is enriched with a "cover_image_small" property and written as
+    a JSON line to the output file. It respects MusicBrainz rate limits
+    (1 request per second) and adds a small delay for Cover Art Archive calls.
 
 .PARAMETER SqlFile
     Path to the SQL file containing the artist MBIDs (e.g., INSERT statements).
@@ -33,11 +35,13 @@ param(
 # Configuration
 # ------------------------------------------------------------
 $baseApiUrl = "https://musicbrainz.org/ws/2"
-$minRequestIntervalMs = 1100   # 1 request per second + 100ms buffer
+$coverArtBaseUrl = "https://coverartarchive.org"
+$minRequestIntervalMs = 1100   # 1 request per second + 100ms buffer for MusicBrainz
+$coverArtDelayMs = 200         # small delay between Cover Art Archive checks
 $userAgent = "MusicBrainzStudioAlbumCollector/1.0 +https://example.com"
 
 # ------------------------------------------------------------
-# Rate limiting helper
+# Rate limiting helper for MusicBrainz
 # ------------------------------------------------------------
 if (-not (Get-Variable -Name 'lastRequestTime' -Scope Script -ErrorAction SilentlyContinue)) {
     $script:lastRequestTime = (Get-Date).AddMilliseconds(-$minRequestIntervalMs)
@@ -91,6 +95,45 @@ function Invoke-MusicBrainzApi {
 }
 
 # ------------------------------------------------------------
+# Function to check and return the small cover image URL
+# ------------------------------------------------------------
+function Get-CoverArtThumbnail {
+    param([string]$ReleaseGroupId)
+
+    # Construct the URL for the 250px front thumbnail
+    $thumbnailUrl = "$coverArtBaseUrl/release-group/$ReleaseGroupId/front-250.jpg"
+
+    # Use HEAD request to check existence without downloading the image
+    try {
+        $request = [System.Net.WebRequest]::Create($thumbnailUrl)
+        $request.Method = "HEAD"
+        $request.UserAgent = $userAgent
+        $response = $request.GetResponse()
+        $statusCode = [int]$response.StatusCode
+        $response.Close()
+
+        if ($statusCode -eq 200) {
+            Write-Host "      Cover art found: $thumbnailUrl"
+            return $thumbnailUrl
+        }
+        else {
+            Write-Host "      No cover art available (HTTP $statusCode)"
+            return $null
+        }
+    }
+    catch {
+        # If we get a WebException, check if it's a 404
+        if ($_.Exception.Response -and $_.Exception.Response.StatusCode -eq [System.Net.HttpStatusCode]::NotFound) {
+            Write-Host "      No cover art available (404)"
+        }
+        else {
+            Write-Warning "      Error checking cover art for $ReleaseGroupId : $_"
+        }
+        return $null
+    }
+}
+
+# ------------------------------------------------------------
 # Step 1: Extract all MBIDs (UUIDs) from the SQL file
 # ------------------------------------------------------------
 Write-Host "Reading SQL file from '$SqlFile'..."
@@ -127,8 +170,6 @@ foreach ($mbid in $mbids) {
 
     do {
         $offset = ($page - 1) * $perPage
-        # IMPORTANT: 'releases' is NOT allowed in a release-group browse.
-        # We include only artist-credits and url-rels (plus maybe annotations if needed).
         $browseUrl = "$baseApiUrl/release-group?artist=$mbid&limit=$perPage&offset=$offset&inc=artist-credits+url-rels&fmt=json"
 
         try {
@@ -148,10 +189,18 @@ foreach ($mbid in $mbids) {
                 if ($isAlbum -and -not $hasSecondary) {
                     Write-Host "    -> Found studio album: $($rg.title) (ID: $($rg.id))"
 
-                    # Output the release group object as a JSON line.
-                    # It already contains artist-credit, first-release-date, etc.
+                    # Get the small cover image URL
+                    $thumbnailUrl = Get-CoverArtThumbnail -ReleaseGroupId $rg.id
+
+                    # Add the cover_image_small property to the release group object
+                    $rg | Add-Member -NotePropertyName 'cover_image_small' -NotePropertyValue $thumbnailUrl -Force
+
+                    # Output the enriched release group as a JSON line
                     $jsonLine = $rg | ConvertTo-Json -Compress -Depth 10
                     Add-Content -Path $OutputFile -Value $jsonLine
+
+                    # Small delay to be gentle to Cover Art Archive
+                    Start-Sleep -Milliseconds $coverArtDelayMs
                 }
                 else {
                     # Optional debug: log skipped items
@@ -168,6 +217,7 @@ foreach ($mbid in $mbids) {
 
     } while ($page -le $totalPages)
 
+    # Extra pause between artists to stay well within rate limits
     Start-Sleep -Milliseconds 200
 }
 
