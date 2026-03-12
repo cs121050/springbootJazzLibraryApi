@@ -16,6 +16,18 @@ import sys
 import os
 
 
+def strip_sql_comments(sql):
+    """
+    Remove SQL comments (-- and /* */) from the input string.
+    Simple implementation – assumes comment markers do not appear inside quoted strings.
+    """
+    # Remove -- comments (single line)
+    sql = re.sub(r'--.*$', '', sql, flags=re.MULTILINE)
+    # Remove /* */ comments (multi-line, non-greedy)
+    sql = re.sub(r'/\*.*?\*/', '', sql, flags=re.DOTALL)
+    return sql
+
+
 def parse_values(values_str):
     """
     Split a VALUES clause into individual value strings, respecting
@@ -127,6 +139,9 @@ def main():
 
     with open(input_file, 'r', encoding='utf-8') as f:
         content = f.read()
+
+    # Remove comments that could interfere with statement detection
+    content = strip_sql_comments(content)
 
     # Regex to match INSERT statements of either dialect.
     # Captures: table identifier, column list, value list.
