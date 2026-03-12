@@ -1,0 +1,13 @@
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (1, 'bass');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (2, 'guitar');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (3, 'piano');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (4, 'drums');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (5, 'voice');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (6, 'sax');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (7, 'trumpet');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (8, 'violin');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (9, 'vibes');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (10, 'clarinete');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (11, 'trombone');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (12, 'journalism');
+INSERT INTO Instrument (instrument_id, instrument_name) VALUES (13, 'other');
