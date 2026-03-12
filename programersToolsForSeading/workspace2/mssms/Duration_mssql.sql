@@ -1,0 +1,5 @@
+INSERT [dbo].[Duration] ([duration_id], [duration_name], [duration_description]) VALUES (1, N'very short', '5')
+INSERT [dbo].[Duration] ([duration_id], [duration_name], [duration_description]) VALUES (2, N'short', '5to15')
+INSERT [dbo].[Duration] ([duration_id], [duration_name], [duration_description]) VALUES (3, N'medium', '15to30')
+INSERT [dbo].[Duration] ([duration_id], [duration_name], [duration_description]) VALUES (4, N'long', '30to60')
+INSERT [dbo].[Duration] ([duration_id], [duration_name], [duration_description]) VALUES (5, N'very long', 'moreThan60')

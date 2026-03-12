@@ -1,0 +1,7 @@
+SET IDENTITY_INSERT artist ON;
+
+insert
+
+SET IDENTITY_INSERT artist OFF;
+-- Reseed the identity
+DBCC CHECKIDENT ('artist', RESEED);
