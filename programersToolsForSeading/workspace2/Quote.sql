@@ -1,51 +1,50 @@
-﻿INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The way to get started is to quit talking and begin doing." Walt Disney')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Fear is the disease. Hustle is the antidote." Travis Kalanick')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The question I ask myself almost every day is, ''Am I doing the most important thing I could be doing?''" Mark Zuckerberg')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The best time to plant a tree was 20 years ago. The second best time is now." Chinese proverb')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"I attribute my success to this: I never gave or took any excuse." Florence Nightingale')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The most difficult thing is the decision to act, the rest is merely tenacity." Amelia Earhart')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Do or do not. There is no try." Yoda')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Twenty years from now, you will be more disappointed by the things that you didn''t do than by the ones you did do, so throw off the bowlines, sail away from safe harbor, catch the trade winds in your sails. Explore, Dream, Discover." Mark Twain')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"When I let go of what I am, I become what I might be." Lao Tzu')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The most common way people give up their power is by thinking they don''t have any." Alice Walker')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Life is what happens to you while you''re busy making other plans." John Lennon')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Eighty percent of success is showing up." Woody Allen')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Build your own dreams, or someone else will hire you to build theirs." Farrah Gray')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"It is never too late to be what you might have been." George Eliot')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"When everything seems to be going against you, remember that the airplane takes off against the wind, not with it." Henry Ford')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"You can''t fall if you don''t climb. But there''s no joy in living your whole life on the ground." Unknown')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Challenges are what make life interesting, and overcoming them is what makes life meaningful." Joshua Marine')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"If you want to lift yourself up, lift up someone else." Booker T. Washington')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Formal education will make you a living self-education will make you a fortune." Jim Rohn')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Rarely have I seen a situation where doing less than the other guy is a good strategy." Jimmy Spithill')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Your time is limited, so don''t waste it living someone else''s life." Steve Jobs')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The best revenge is massive success." Frank Sinatra')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"My biggest motivation? Just to keep challenging myself. I see life almost like one long university education that I never had '+ NCHAR(45) + NCHAR(45) +' every day I''m learning something new." Richard Branson')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"I''ve learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel." Maya Angelou')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The two most important days in your life are the day you are born and the day you find out why." Mark Twain')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Whatever you can do, or dream you can, begin it. Boldness has genius, power, and magic in it." Johann Wolfgang von Goethe')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Life shrinks or expands in proportion to one''s courage." Anais Nin')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"There is only one way to avoid criticism: Do nothing, say nothing, and be nothing." Aristotle')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Do what you can, where you are, with what you have." Teddy Roosevelt')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Everything you''ve ever wanted is on the other side of fear." George Addair')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Fall seven times and stand up eight." Japanese proverb')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Two roads diverged in a wood, and I, I took the one less traveled by, and that has made all the difference." Robert Frost')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"I am not a product of my circumstances. I am a product of my decisions." Stephen Covey')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"It''s hard to do a really good job on anything you don''t think about in the shower." Paul Graham')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"What''s money? A man is a success if he gets up in the morning and goes to bed at night, and in between does what he wants to do." Bob Dylan')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"A person who never made a mistake never tried anything new." Albert Einstein')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The person who says it cannot be done should not interrupt the person who is doing it." Chinese proverb')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"You can''t use up creativity. The more you use, the more you have." Maya Angelou')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"You miss 100 percent of the shots you don''t take." Wayne Gretzky')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"It always seems impossible until it''s done." Nelson Mandela')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"It does not matter how slowly you go as long as you do not stop." Confucius')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"If you do what you''ve always done, you''ll get what you''ve always gotten." Tony Robbins')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Success is walking from failure to failure with no loss of enthusiasm." Winston Churchill')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"You may be disappointed if you fail, but you are doomed if you don''t try." Beverly Sills')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Few things can help an individual more than to place responsibility on him, and to let him know that you trust him." Booker T. Washington')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Whenever you see a successful person, you only see the public glories, never the private sacrifices to reach them." Vaibhav Shah')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Remember, no one can make you feel inferior without your consent." Eleanor Roosevelt')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The question isn''t who is going to let me it''s who is going to stop me." Ayn Rand')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"The only way to do great work is to love what you do." Steve Jobs')
-	INSERT [dbo].[Quote] ([artist_id],[quote_text]) VALUES (1,N'"Timing, perseverance, and 10 years of trying will eventually make you look like an overnight success." Biz Stone')
-	
+﻿INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The way to get started is to quit talking and begin doing." Walt Disney');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Fear is the disease. Hustle is the antidote." Travis Kalanick');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The question I ask myself almost every day is, ''Am I doing the most important thing I could be doing?''" Mark Zuckerberg');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The best time to plant a tree was 20 years ago. The second best time is now." Chinese proverb');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"I attribute my success to this: I never gave or took any excuse." Florence Nightingale');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The most difficult thing is the decision to act, the rest is merely tenacity." Amelia Earhart');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Do or do not. There is no try." Yoda');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Twenty years from now, you will be more disappointed by the things that you didn''t do than by the ones you did do, so throw off the bowlines, sail away from safe harbor, catch the trade winds in your sails. Explore, Dream, Discover." Mark Twain');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"When I let go of what I am, I become what I might be." Lao Tzu');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The most common way people give up their power is by thinking they don''t have any." Alice Walker');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Life is what happens to you while you''re busy making other plans." John Lennon');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Eighty percent of success is showing up." Woody Allen');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Build your own dreams, or someone else will hire you to build theirs." Farrah Gray');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"It is never too late to be what you might have been." George Eliot');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"When everything seems to be going against you, remember that the airplane takes off against the wind, not with it." Henry Ford');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"You can''t fall if you don''t climb. But there''s no joy in living your whole life on the ground." Unknown');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Challenges are what make life interesting, and overcoming them is what makes life meaningful." Joshua Marine');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"If you want to lift yourself up, lift up someone else." Booker T. Washington');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Formal education will make you a living self-education will make you a fortune." Jim Rohn');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Rarely have I seen a situation where doing less than the other guy is a good strategy." Jimmy Spithill');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Your time is limited, so don''t waste it living someone else''s life." Steve Jobs');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The best revenge is massive success." Frank Sinatra');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"My biggest motivation? Just to keep challenging myself. I see life almost like one long university education that I never had '+ NCHAR(45) + NCHAR(45) +' every day I''m learning something new." Richard Branson');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"I''ve learned that people will forget what you said, people will forget what you did, but people will never forget how you made them feel." Maya Angelou');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The two most important days in your life are the day you are born and the day you find out why." Mark Twain');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Whatever you can do, or dream you can, begin it. Boldness has genius, power, and magic in it." Johann Wolfgang von Goethe');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Life shrinks or expands in proportion to one''s courage." Anais Nin');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"There is only one way to avoid criticism: Do nothing, say nothing, and be nothing." Aristotle');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Do what you can, where you are, with what you have." Teddy Roosevelt');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Everything you''ve ever wanted is on the other side of fear." George Addair');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Fall seven times and stand up eight." Japanese proverb');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Two roads diverged in a wood, and I, I took the one less traveled by, and that has made all the difference." Robert Frost');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"I am not a product of my circumstances. I am a product of my decisions." Stephen Covey');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"It''s hard to do a really good job on anything you don''t think about in the shower." Paul Graham');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"What''s money? A man is a success if he gets up in the morning and goes to bed at night, and in between does what he wants to do." Bob Dylan');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"A person who never made a mistake never tried anything new." Albert Einstein');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The person who says it cannot be done should not interrupt the person who is doing it." Chinese proverb');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"You can''t use up creativity. The more you use, the more you have." Maya Angelou');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"You miss 100 percent of the shots you don''t take." Wayne Gretzky');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"It always seems impossible until it''s done." Nelson Mandela');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"It does not matter how slowly you go as long as you do not stop." Confucius');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"If you do what you''ve always done, you''ll get what you''ve always gotten." Tony Robbins');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Success is walking from failure to failure with no loss of enthusiasm." Winston Churchill');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"You may be disappointed if you fail, but you are doomed if you don''t try." Beverly Sills');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Few things can help an individual more than to place responsibility on him, and to let him know that you trust him." Booker T. Washington');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Whenever you see a successful person, you only see the public glories, never the private sacrifices to reach them." Vaibhav Shah');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Remember, no one can make you feel inferior without your consent." Eleanor Roosevelt');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The question isn''t who is going to let me it''s who is going to stop me." Ayn Rand');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"The only way to do great work is to love what you do." Steve Jobs');
+INSERT INTO quote (artist_id,quote_text) VALUES (1,'"Timing, perseverance, and 10 years of trying will eventually make you look like an overnight success." Biz Stone');

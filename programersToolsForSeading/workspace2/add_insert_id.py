@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Add an auto-increment ID column to INSERT statements and convert to
-Microsoft SQL Server and PostgreSQL syntax.
+Add an auto-increment ID column to INSERT statements from either SQL Server or
+PostgreSQL input, and convert to both Microsoft SQL Server and PostgreSQL syntax.
 
 Usage:
-    python add_insert_id.py input.sql
+    python add_insert_id.py <input.sql>
 
 Output:
-    input_mssql.sql    – SQL Server style (brackets, N'...')
-    input_postgres.sql – PostgreSQL style (standard, semicolon)
+    input_mssql.sql    – SQL Server style (brackets, N'...' preserved)
+    input_postgres.sql – PostgreSQL style (standard, semicolon terminated)
 """
 
 import re
@@ -77,6 +77,47 @@ def convert_value_for_postgres(val):
     return val
 
 
+def extract_table_name(ident):
+    """
+    Extract the base table name from a possibly schema‑qualified and/or
+    bracket‑enclosed identifier.
+    Examples:
+        '[dbo].[video]'   -> 'video'
+        'public.video'    -> 'video'
+        'video'           -> 'video'
+        '[video]'         -> 'video'
+    """
+    # Remove all brackets
+    no_brackets = re.sub(r'[\[\]]', '', ident)
+    # Split on dot and return the last part
+    parts = no_brackets.split('.')
+    return parts[-1]
+
+
+def to_sql_server_identifier(ident):
+    """
+    Convert an identifier (possibly with schema and/or brackets) into a fully
+    bracketed SQL Server identifier.
+    Example: 'dbo.video' -> '[dbo].[video]'
+             '[dbo].[video]' -> '[dbo].[video]'
+    """
+    # Split on dots, strip existing brackets from each part, then re‑bracket
+    parts = re.split(r'\.', ident)
+    bracketed = []
+    for part in parts:
+        part = part.strip('[]')
+        bracketed.append(f'[{part}]')
+    return '.'.join(bracketed)
+
+
+def to_postgres_identifier(ident):
+    """
+    Convert an identifier (possibly with brackets) into a plain PostgreSQL
+    identifier (no brackets).
+    """
+    return re.sub(r'[\[\]]', '', ident)
+
+
 def main():
     if len(sys.argv) != 2:
         print("Usage: python add_insert_id.py <input.sql>")
@@ -87,10 +128,11 @@ def main():
     with open(input_file, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # Improved regex: matches each INSERT statement, allowing an optional semicolon
-    # before the next INSERT or end of file.
+    # Regex to match INSERT statements of either dialect.
+    # Captures: table identifier, column list, value list.
+    # Lookahead ensures we stop before the next INSERT or end of file.
     pattern = re.compile(
-        r'INSERT\s+\[dbo\]\.\[(\w+)\]\s*\((.*?)\)\s*VALUES\s*\((.*?)\)\s*;?\s*(?=INSERT\s+\[dbo\]\.\[\w+\]|\Z)',
+        r'INSERT\s+(?:INTO\s+)?([^\s\(]+)\s*\((.*?)\)\s*VALUES\s*\((.*?)\)\s*;?\s*(?=INSERT\s+(?:INTO\s+)?[^\s\(]+|\Z)',
         re.DOTALL | re.IGNORECASE
     )
 
@@ -99,38 +141,45 @@ def main():
         print("No INSERT statements found.")
         sys.exit(1)
 
-    counters = {}          # per‑table ID counters
+    counters = {}          # per‑table ID counters (key = lowercased base table name)
     mssql_lines = []
     pg_lines = []
 
-    for table, cols_str, vals_str in statements:
-        # Next ID for this table
-        counter = counters.get(table, 0) + 1
-        counters[table] = counter
+    for table_ident, cols_str, vals_str in statements:
+        # Extract base table name for the ID column and counter
+        base_table = extract_table_name(table_ident)
+        base_lower = base_table.lower()
+        counter = counters.get(base_lower, 0) + 1
+        counters[base_lower] = counter
 
-        # Parse columns (simple comma split, identifiers are simple)
+        # Parse columns (simple comma split – identifiers are simple)
         original_cols = [col.strip() for col in cols_str.split(',')]
 
         # Parse values (handles quoted strings with commas)
         original_vals = parse_values(vals_str)
 
         if len(original_cols) != len(original_vals):
-            print(f"Warning: column/value count mismatch for table {table}. Skipping.")
+            print(f"Warning: column/value count mismatch for table {table_ident}. Skipping.")
             continue
 
         # ----- SQL Server output -----
-        # Create lowercase column name for the ID
-        id_column_lower = f"[{table.lower()}_id]"
-        mssql_cols = [id_column_lower] + original_cols
+        # Build table reference (bracketed parts)
+        mssql_table_ref = to_sql_server_identifier(table_ident)
+        id_column_mssql = f"[{base_lower}_id]"
+        mssql_cols = [id_column_mssql] + original_cols   # original columns keep their brackets
         mssql_vals = [str(counter)] + original_vals
-        mssql_stmt = f"INSERT [dbo].[{table}] ({', '.join(mssql_cols)}) VALUES ({', '.join(mssql_vals)})"
+        mssql_stmt = f"INSERT {mssql_table_ref} ({', '.join(mssql_cols)}) VALUES ({', '.join(mssql_vals)})"
         mssql_lines.append(mssql_stmt)
 
         # ----- PostgreSQL output -----
-        # Strip brackets from column names, add the new id column (lowercase)
-        pg_cols = [f"{table.lower()}_id"] + [col.strip('[]') for col in original_cols]
+        # Build table reference (no brackets)
+        pg_table_ref = to_postgres_identifier(table_ident)
+        id_column_pg = f"{base_lower}_id"
+        # Strip brackets from original columns
+        pg_cols = [id_column_pg] + [col.strip('[]') for col in original_cols]
+        # Convert values (strip N prefix etc.)
         pg_vals = [str(counter)] + [convert_value_for_postgres(v) for v in original_vals]
-        pg_stmt = f"INSERT INTO {table} ({', '.join(pg_cols)}) VALUES ({', '.join(pg_vals)});"
+        pg_stmt = f"INSERT INTO {pg_table_ref} ({', '.join(pg_cols)}) VALUES ({', '.join(pg_vals)});"
         pg_lines.append(pg_stmt)
 
     # Write output files
