@@ -23,17 +23,26 @@
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (11, 'Trombone');
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (12, 'Journalism');
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (13, 'other');
+	
+	SELECT setval('instrument_instrument_id_seq', (SELECT max(instrument_id) FROM instrument));
+
 	--duration;
 	INSERT INTO Duration (duration_id, duration_name, duration_description) VALUES (1, 'very short', '5');
 	INSERT INTO Duration (duration_id, duration_name, duration_description) VALUES (2, 'short', '5to15');
 	INSERT INTO Duration (duration_id, duration_name, duration_description) VALUES (3, 'medium', '15to30');
 	INSERT INTO Duration (duration_id, duration_name, duration_description) VALUES (4, 'long', '30to60');
 	INSERT INTO Duration (duration_id, duration_name, duration_description) VALUES (5, 'very long', 'moreThan60');
+	
+	SELECT setval('duration_duration_id_seq', (SELECT max(duration_id) FROM duration));
+	
 	--type;
 	INSERT INTO type (type_id, type_name) VALUES (1, 'interview');
 	INSERT INTO type (type_id, type_name) VALUES (2, 'movie');
 	INSERT INTO type (type_id, type_name) VALUES (3, 'lecture');
 	INSERT INTO type (type_id, type_name) VALUES (4, 'music');
+	
+	SELECT setval('type_type_id_seq', (SELECT max(type_id) FROM type));
+	
 	--artists
 	INSERT INTO dbo.Artist (artist_id, spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, instrument_id) VALUES (1, '1WmIo9ORq1IDlovUWFmo4Y', 'Sam', 'Rivers', 'f86342be-eef7-445b-90c9-250bdf3f0b3b', 6);
 	INSERT INTO dbo.Artist (artist_id, spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, instrument_id) VALUES (2, '1WmIo9ORq1IDlovUWFmo4Y', 'Wynton', 'Marsalis', '0d74dcc7-5684-4695-830f-a9846aad8ba9', 6);
@@ -374,6 +383,9 @@
 	INSERT INTO dbo.Artist (artist_id, spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, instrument_id) VALUES (337, '1WmIo9ORq1IDlovUWFmo4Y', 'Skitch', 'Henderson', '37a31cb5-4b83-48f1-8f14-4574741526d4', 3);
 	INSERT INTO dbo.Artist (artist_id, spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, instrument_id) VALUES (338, '1WmIo9ORq1IDlovUWFmo4Y', 'Frank', 'Sinatra', '197450cd-0124-4164-b723-3c22dd16494d', 5);
 	INSERT INTO dbo.Artist (artist_id, spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, instrument_id) VALUES (339, '1WmIo9ORq1IDlovUWFmo4Y', 'Rodney', 'Whitaker', '3dd90705-1601-412e-9cbf-0b02a68643a4', 1);
+	
+	SELECT setval('artist_artist_id_seq', (SELECT max(artist_id) FROM artist));
+	
 	--qoute
 	INSERT INTO quote (quote_id, artist_id, quote_text) VALUES (1, 1, '"The way to get started is to quit talking and begin doing." Walt Disney');
 	INSERT INTO quote (quote_id, artist_id, quote_text) VALUES (2, 1, '"Fear is the disease. Hustle is the antidote." Travis Kalanick');
@@ -425,6 +437,9 @@
 	INSERT INTO quote (quote_id, artist_id, quote_text) VALUES (48, 1, '"The question isn''t who is going to let me it''s who is going to stop me." Ayn Rand');
 	INSERT INTO quote (quote_id, artist_id, quote_text) VALUES (49, 1, '"The only way to do great work is to love what you do." Steve Jobs');
 	INSERT INTO quote (quote_id, artist_id, quote_text) VALUES (50, 1, '"Timing, perseverance, and 10 years of trying will eventually make you look like an overnight success." Biz Stone');
+	
+	SELECT setval('quote_quote_id_seq', (SELECT max(quote_id) FROM quote));
+	
 	--videos;
 	INSERT INTO video (video_id, video_name, video_duration, duration_id, video_path, type_id, location_id, video_availability) VALUES (1, 'Coleman Hawkins TALKS', '7123', 5, 'https://www.youtube.com/watch?v=g90alLcVBFg', 1, 'g90alLcVBFg', '0');
 	INSERT INTO video (video_id, video_name, video_duration, duration_id, video_path, type_id, location_id, video_availability) VALUES (2, 'NEA Jazz Masters: Muhal Richard Abrams (2010)', '226', 1, 'https://www.youtube.com/watch?v=SleQiNHNeH8', 1, 'SleQiNHNeH8', '1');
@@ -3644,17 +3659,8 @@
 	INSERT INTO video (video_id, video_name, video_duration, duration_id, video_path, type_id, location_id, video_availability) VALUES (3216, 'John Zorn : On The Edge', '533', 2, 'https://www.youtube.com/watch?v=MXkAr4w4cjY', 2, 'MXkAr4w4cjY', '1');
 	INSERT INTO video (video_id, video_name, video_duration, duration_id, video_path, type_id, location_id, video_availability) VALUES (3217, 'John Zorn - An Informance with John Zorn', '4774', 5, 'https://www.youtube.com/watch?v=Jj0M8HdGGgE', 2, 'Jj0M8HdGGgE', '1');
 	INSERT INTO video (video_id, video_name, video_duration, duration_id, video_path, type_id, location_id, video_availability) VALUES (3218, 'John Zorn rare interviews in his apartment', '665', 2, 'https://www.youtube.com/watch?v=5uN8A3TljOk', 2, '5uN8A3TljOk', '1');
-	--
 	
-	
-	SELECT setval('instrument_instrument_id_seq', (SELECT max(instrument_id) FROM instrument));
-	SELECT setval('duration_duration_id_seq', (SELECT max(duration_id) FROM duration));
-	SELECT setval('type_type_id_seq', (SELECT max(type_id) FROM type));
-	SELECT setval('artist_artist_id_seq', (SELECT max(artist_id) FROM artist));
-	SELECT setval('quote_quote_id_seq', (SELECT max(quote_id) FROM quote));
 	SELECT setval('video_video_id_seq', (SELECT max(video_id) FROM video));
-	
-	
 	
 	--videocontainartist;
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (1, 5);
