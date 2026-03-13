@@ -5,50 +5,47 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistId;
+
 @Embeddable
 public class AlbumContainsArtistId implements Serializable {
 
-    @Column(name = "discogs_artist_id", nullable = false)
-    private int discogsArtistId;
+    @Column(name = "artist_id")
+    private int artistId;
 
     @Column(name = "discogs_release_id", nullable = false)
     private int discogsReleaseId;
 
     public AlbumContainsArtistId() {}
 
-    public AlbumContainsArtistId(int discogsArtistId, int discogsReleaseId) {
-        this.discogsArtistId = discogsArtistId;
+    public AlbumContainsArtistId(int artistId, int discogsReleaseId) {
+        this.artistId = artistId;
         this.discogsReleaseId = discogsReleaseId;
     }
 
-    // Getters and setters
-    public int getDiscogsArtistId() {
-        return discogsArtistId;
-    }
-
-    public void setDiscogsArtistId(int discogsArtistId) {
-        this.discogsArtistId = discogsArtistId;
-    }
-
-    public int getDiscogsReleaseId() {
-        return discogsReleaseId;
-    }
-
-    public void setDiscogsReleaseId(int discogsReleaseId) {
-        this.discogsReleaseId = discogsReleaseId;
-    }
-
+    // Override equals and hashCode for proper comparison in collections
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AlbumContainsArtistId that = (AlbumContainsArtistId) o;
-        return discogsArtistId == that.discogsArtistId &&
-               discogsReleaseId == that.discogsReleaseId;
+        return Objects.equals(artistId, that.artistId) && Objects.equals(discogsReleaseId, that.discogsReleaseId);
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(discogsArtistId, discogsReleaseId);
-    }
+    // Getters and setters
+	public int getArtistId() {
+		return artistId;
+	}
+
+	public void setArtistId(int artistId) {
+		this.artistId = artistId;
+	}
+
+	public int getDiscogsReleaseId() {
+		return discogsReleaseId;
+	}
+
+	public void setDiscogsReleaseId(int discogsReleaseId) {
+		this.discogsReleaseId = discogsReleaseId;
+	}
 }

@@ -52,7 +52,4 @@ public class VideoContainsArtistId implements Serializable {
 	public void setVideoId(int videoId) {
 		this.videoId = videoId;
 	}
-    
-    
-
 }

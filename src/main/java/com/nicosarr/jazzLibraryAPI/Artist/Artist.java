@@ -29,7 +29,7 @@ public class Artist {
     @Column(name = "artist_id")	
     private int artist_id;
 	
-	@Column(name = "discogs_id", unique = true)	
+	@Column(name = "discogs_id")	
     private Integer discogs_id;
 	
     @Column(name = "artist_name")
@@ -46,6 +46,9 @@ public class Artist {
     
     @Column(name = "spotify_playlist_id")    
     private String  spotify_playlist_id; 
+    
+    @Column(name = "wikipedia_url")
+    private String wikipedia_url;   
     
     @ManyToOne(fetch = FetchType.LAZY)  // This makes it lazy loaded
     @JoinColumn(
@@ -66,7 +69,8 @@ public class Artist {
     
 	public Artist() {
 	}
-    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id){
+    public Artist (int artist_id, String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, 
+    		Integer discogs_id, String wikipedia_url){
 	   	this.artist_id = artist_id;
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
@@ -74,9 +78,11 @@ public class Artist {
 	   	this.artist_rank= artist_rank;	
 	   	this.musicbrainz_uuid = musicbrainz_uuid;
 	   	this.spotify_playlist_id = spotify_playlist_id;
-	   	this.discogs_id = discogs_id;	   	
+	   	this.discogs_id = discogs_id;	 
+	   	this.wikipedia_url = wikipedia_url;
     }
-    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id){
+    public Artist (String artist_name, String artist_surname, int instrument_id, Integer  artist_rank, String musicbrainz_uuid, String spotify_playlist_id, 
+    		Integer discogs_id, String wikipedia_url){
 	   	this.artist_name = artist_name;
 	   	this.artist_surname = artist_surname;
 	   	this.instrument_id = instrument_id;	   	
@@ -84,6 +90,7 @@ public class Artist {
 	   	this.musicbrainz_uuid = musicbrainz_uuid;
 	   	this.spotify_playlist_id = spotify_playlist_id;
 	   	this.discogs_id = discogs_id;
+	   	this.wikipedia_url = wikipedia_url;
     }    
     public Artist (String artist_name, String artist_surname, int instrument_id){
 	   	this.artist_name = artist_name;
@@ -147,14 +154,6 @@ public class Artist {
             .map(VideoContainsArtist::getVideo)
             .collect(Collectors.toList());
     }
-
-	@Override
-	public String toString() {
-		return "Artist [artist_id=" + artist_id + ", artist_name=" + artist_name + ", artist_surname=" + artist_surname
-				+ ", artist_rank=" + artist_rank + ", musicbrainz_uuid=" + musicbrainz_uuid + ", spotify_playlist_id="
-				+ spotify_playlist_id + ", instrument=" + instrument + ", instrument_id=" + instrument_id
-				+ ", videoContainsArtists=" + videoContainsArtists + ", quotes=" + quotes + "]";
-	}
 	public String getMusicbrainz_uuid() {
 		return musicbrainz_uuid;
 	}
@@ -179,6 +178,19 @@ public class Artist {
 	public void setDiscogs_id(Integer discogs_id) {
 		this.discogs_id = discogs_id;
 	}
-	
+	public String getWikipedia_url() {
+		return wikipedia_url;
+	}
+	public void setWikipedia_url(String wikipedia_url) {
+		this.wikipedia_url = wikipedia_url;
+	}
+	@Override
+	public String toString() {
+		return "Artist [artist_id=" + artist_id + ", discogs_id=" + discogs_id + ", artist_name=" + artist_name
+				+ ", artist_surname=" + artist_surname + ", artist_rank=" + artist_rank + ", musicbrainz_uuid="
+				+ musicbrainz_uuid + ", spotify_playlist_id=" + spotify_playlist_id + ", wikipedia_url=" + wikipedia_url
+				+ ", instrument=" + instrument + ", instrument_id=" + instrument_id + ", videoContainsArtists="
+				+ videoContainsArtists + ", quotes=" + quotes + "]";
+	}
 }
 

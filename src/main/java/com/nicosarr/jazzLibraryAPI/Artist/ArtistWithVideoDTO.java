@@ -15,12 +15,14 @@ public class ArtistWithVideoDTO {
     private String musicbrainz_uuid;
     private String spotify_playlist_id;
     private Integer discogs_id;
+    private String wikipedia_url;
 
     // Constructors
     public ArtistWithVideoDTO() {}
 
     public ArtistWithVideoDTO(int artist_id, String artist_name, String artist_surname, 
-                     Integer artist_rank, int instrument_id, String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id) {
+                     Integer artist_rank, int instrument_id, String musicbrainz_uuid, String spotify_playlist_id, 
+                     Integer discogs_id, String wikipedia_url) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -29,6 +31,7 @@ public class ArtistWithVideoDTO {
         this.musicbrainz_uuid = musicbrainz_uuid;
         this.spotify_playlist_id = spotify_playlist_id;
         this.discogs_id = discogs_id;
+        this.wikipedia_url = wikipedia_url;
     }
 
  // Static factory method to convert from Entity
@@ -41,7 +44,8 @@ public class ArtistWithVideoDTO {
             artist.getInstrument_id(),
             artist.getMusicbrainz_uuid(),
             artist.getSpotify_playlist_id(),
-            artist.getDiscogs_id()
+            artist.getDiscogs_id(),
+            artist.getWikipedia_url()
         );
         
         // Convert artists if they exist
@@ -138,6 +142,14 @@ public class ArtistWithVideoDTO {
 
 	public void setDiscogs_id(Integer discogs_id) {
 		this.discogs_id = discogs_id;
+	}
+
+	public String getWikipedia_url() {
+		return wikipedia_url;
+	}
+
+	public void setWikipedia_url(String wikipedia_url) {
+		this.wikipedia_url = wikipedia_url;
 	}
 	
 	    
