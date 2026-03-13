@@ -1,13 +1,11 @@
 package com.nicosarr.jazzLibraryAPI.VideoContainsArtist;
 
-
 import java.io.Serializable;
 import java.util.Objects;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 
-//you need that for having an "id " into the many to many object
 @Embeddable
 public class VideoContainsArtistId implements Serializable {
 

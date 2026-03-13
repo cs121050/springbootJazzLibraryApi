@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Line‑by‑line YouTube video availability checker for SQL files.
-Improved detection for private, unavailable, and age‑restricted videos.
+Detects: available, not embeddable, does not exist, private, members only, other errors.
+Now also catches "removed for violating Terms of Service" as does not exist (-2).
 """
 
 import os
@@ -17,7 +18,6 @@ import requests
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
-# ANSI colors
 class Colors:
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
@@ -34,7 +34,6 @@ if not sys.stdout.isatty():
 
 
 def extract_youtube_id(line):
-    """Extract YouTube ID from a line using multiple patterns."""
     patterns = [
         r",\s*'([a-zA-Z0-9_-]{11})'\s*,",
         r",\s*N'([a-zA-Z0-9_-]{11})'\s*,",
@@ -46,8 +45,6 @@ def extract_youtube_id(line):
         match = re.search(pat, line)
         if match:
             return match.group(1)
-
-    # NCHAR concatenation
     nchar_nums = re.findall(r"NCHAR\((\d+)\)", line)
     if nchar_nums:
         result = ''.join(chr(int(n)) for n in nchar_nums)
@@ -58,7 +55,6 @@ def extract_youtube_id(line):
 
 
 def get_video_name(line):
-    """Extract video name (second quoted string) for display."""
     matches = re.findall(r"'([^']*)'", line)
     if len(matches) >= 2:
         return matches[1]
@@ -66,7 +62,6 @@ def get_video_name(line):
 
 
 def replace_last_value(line, new_value):
-    """Replace the last quoted value in the line with new_value."""
     pattern = r"(N?'[^']*')"
     matches = list(re.finditer(pattern, line))
     if not matches:
@@ -82,10 +77,6 @@ def replace_last_value(line, new_value):
 
 
 def check_video_status(video_id):
-    """
-    Check YouTube video availability using oEmbed + page scraping.
-    Returns (status_code, message)
-    """
     # 1. Try oEmbed
     oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
     try:
@@ -94,7 +85,6 @@ def check_video_status(video_id):
             return 1, "Available"
         elif resp.status_code == 404:
             return -2, "Not found"
-        # 401/403 -> need to scrape
     except:
         pass
 
@@ -108,9 +98,13 @@ def check_video_status(video_id):
         resp = requests.get(watch_url, headers=headers, timeout=5)
         if resp.status_code == 200:
             content = resp.text.lower()
-            # Check for various error messages
-            if 'video unavailable' in content or 'this video is not available' in content:
-                return -2, "Video unavailable"
+            # Combined check for "does not exist" messages
+            if any(phrase in content for phrase in [
+                'video unavailable',
+                'this video is not available',
+                'has been removed for violating youtube\'s terms of service'
+            ]):
+                return -2, "Video unavailable/removed"
             if 'private video' in content or 'this video is private' in content:
                 return -3, "Private video"
             if 'sign in to confirm your age' in content:
@@ -119,7 +113,6 @@ def check_video_status(video_id):
                 return -1, "Not embeddable"
             if 'members only' in content:
                 return -4, "Members only"
-            # If none of the above, assume available
             return 1, "Available"
         elif resp.status_code == 404:
             return -2, "Page not found"
@@ -140,9 +133,8 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    # Collect video IDs and line info
-    video_id_map = {}      # id -> first video name
-    line_info = []         # (idx, id, old_line, name)
+    video_id_map = {}
+    line_info = []
 
     for idx, line in enumerate(lines):
         if not re.search(r'INSERT\s+INTO\s+video|INSERT\s+\[dbo\]\.\[Video\]', line, re.IGNORECASE):
@@ -164,7 +156,6 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
 
     logger.info(f"Found {len(line_info)} video lines, {len(video_id_map)} unique IDs.")
 
-    # Check all unique videos
     print(f"\n{Colors.BOLD}{'='*80}{Colors.END}")
     print(f"{Colors.BOLD}Checking YouTube Video Availability{Colors.END}")
     print(f"{Colors.BOLD}{'='*80}{Colors.END}\n")
@@ -178,7 +169,6 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
         status, msg = check_video_status(vid)
         status_results[vid] = status
 
-        # Color mapping
         if status == 1:
             color = Colors.GREEN; stat_str = "AVAILABLE"
         elif status == -1:
@@ -199,7 +189,6 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
         if i < len(unique_ids):
             time.sleep(delay)
 
-    # Summary
     counts = {1:0, -1:0, -2:0, -3:0, -4:0, -5:0}
     for s in status_results.values():
         counts[s] = counts.get(s, 0) + 1
@@ -212,12 +201,10 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
     print(f"  {Colors.YELLOW}👥 Members only:{Colors.END} {counts[-4]}")
     print(f"  {Colors.MAGENTA}? Other error:{Colors.END} {counts[-5]}\n")
 
-    # Update lines
     new_lines = lines[:]
     modified = 0
     for idx, vid, old_line, _ in line_info:
         new_status = status_results.get(vid, -5)
-        # Check if it actually changed (avoid unnecessary writes)
         old_avail_match = re.search(r"'(-?\d)'\)?;?\s*$", old_line)
         if old_avail_match:
             old_avail = old_avail_match.group(1)
@@ -228,7 +215,6 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
             new_lines[idx] = new_line
             modified += 1
 
-    # Write output
     out_name = os.path.basename(file_path).replace('.sql', '_checked.sql')
     out_path = os.path.join(output_dir, out_name)
 
