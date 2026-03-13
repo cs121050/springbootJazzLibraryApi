@@ -23,14 +23,11 @@ public class AlbumContainsArtist {
     private int artist_id; 
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("discogsReleaseId")  // maps the discogsReleaseId part of the composite key
-    @JoinColumn(name = "discogs_release_id", referencedColumnName = "release_id",
-                insertable = false, updatable = false,
-                foreignKey = @ForeignKey(name = "FK_aca_album"))
+    @MapsId("albumId")
+    @JoinColumn(name = "album_id", insertable = false, updatable = false)
     @JsonIgnore
     private Album album;
-    @Transient
-    private int video_id; 
+    private int album_id; 
 
     
     @Column(name = "is_main", nullable = false)
@@ -38,9 +35,9 @@ public class AlbumContainsArtist {
 
     public AlbumContainsArtist() {}
 
-    public AlbumContainsArtist(int artist_id, int discogsReleaseId, boolean isMain) {
+    public AlbumContainsArtist(int artist_id, int album_id, boolean isMain) {
 		this.artist_id = artist_id;
-		this.id = new AlbumContainsArtistId(artist_id, discogsReleaseId);
+		this.album_id = album_id;
 		this.isMain = isMain;
 	}
 
@@ -60,14 +57,6 @@ public class AlbumContainsArtist {
 		this.artist = artist;
 	}
 
-	public int getArtist_id() {
-		return artist_id;
-	}
-
-	public void setArtist_id(int artist_id) {
-		this.artist_id = artist_id;
-	}
-
 	public Album getAlbum() {
 		return album;
 	}
@@ -75,14 +64,7 @@ public class AlbumContainsArtist {
 	public void setAlbum(Album album) {
 		this.album = album;
 	}
-
-	public int getVideo_id() {
-		return video_id;
-	}
-
-	public void setVideo_id(int video_id) {
-		this.video_id = video_id;
-	}
+	
 
 	public boolean isMain() {
 		return isMain;
@@ -90,7 +72,19 @@ public class AlbumContainsArtist {
 
 	public void setMain(boolean isMain) {
 		this.isMain = isMain;
+	}    
+	
+	// Getters and setters for the transient fields
+    public int getArtist_id() {
+        return this.artist != null ? this.artist.getArtist_id() : 0;
+    }
+	public void setArtist_id(int artist_id) {
+		this.artist_id = artist_id;
 	}
-
-    
+    public int getAlbum_id() {
+        return this.album != null ? this.album.getAlbum_id() : 0;
+    }
+	public void setVideo_id(int album_id) {
+		this.album_id = album_id;
+	}
 }

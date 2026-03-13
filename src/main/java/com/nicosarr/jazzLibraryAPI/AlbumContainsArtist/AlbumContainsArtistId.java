@@ -13,26 +13,29 @@ public class AlbumContainsArtistId implements Serializable {
     @Column(name = "artist_id")
     private int artistId;
 
-    @Column(name = "discogs_release_id", nullable = false)
-    private int discogsReleaseId;
+    @Column(name = "album_id")
+    private int albumId;
 
     public AlbumContainsArtistId() {}
 
-    public AlbumContainsArtistId(int artistId, int discogsReleaseId) {
+    public AlbumContainsArtistId(int artistId, int albumId) {
         this.artistId = artistId;
-        this.discogsReleaseId = discogsReleaseId;
+        this.albumId = albumId;
     }
 
-    // Override equals and hashCode for proper comparison in collections
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AlbumContainsArtistId that = (AlbumContainsArtistId) o;
-        return Objects.equals(artistId, that.artistId) && Objects.equals(discogsReleaseId, that.discogsReleaseId);
+        return Objects.equals(artistId, that.artistId) && Objects.equals(albumId, that.albumId);
     }
 
-    // Getters and setters
+    @Override
+    public int hashCode() {
+        return Objects.hash(artistId, albumId);
+    }
+    
 	public int getArtistId() {
 		return artistId;
 	}
@@ -41,11 +44,11 @@ public class AlbumContainsArtistId implements Serializable {
 		this.artistId = artistId;
 	}
 
-	public int getDiscogsReleaseId() {
-		return discogsReleaseId;
+	public int getAlbumId() {
+		return albumId;
 	}
 
-	public void setDiscogsReleaseId(int discogsReleaseId) {
-		this.discogsReleaseId = discogsReleaseId;
+	public void setAlbumId(int albumId) {
+		this.albumId = albumId;
 	}
 }
