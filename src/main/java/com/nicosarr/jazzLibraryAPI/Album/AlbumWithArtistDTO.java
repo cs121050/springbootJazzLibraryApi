@@ -52,7 +52,8 @@ public class AlbumWithArtistDTO extends AlbumDTO {
                         aca.getArtist().getInstrument_id(),
                         aca.getArtist().getMusicbrainz_uuid(),
                         aca.getArtist().getSpotify_playlist_id(),
-                        aca.getArtist().getDiscogs_id()
+                        aca.getArtist().getDiscogs_id(),
+                        aca.getArtist().getWikipedia_url()
                     );
                     dto.getArtists().add(artistDTO);
                 }

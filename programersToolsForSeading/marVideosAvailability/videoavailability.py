@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Line‑by‑line YouTube video availability checker for SQL files.
-Robust against malformed lines – processes every INSERT line independently.
+Improved detection for private, unavailable, and age‑restricted videos.
 """
 
 import os
@@ -14,18 +14,16 @@ from collections import OrderedDict
 
 import requests
 
-# Configure logging
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
 logger = logging.getLogger(__name__)
 
-# ANSI color codes (disable if not a terminal)
+# ANSI colors
 class Colors:
     GREEN = '\033[92m'
     YELLOW = '\033[93m'
     RED = '\033[91m'
     BLUE = '\033[94m'
     MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
     BOLD = '\033[1m'
     END = '\033[0m'
 
@@ -36,21 +34,12 @@ if not sys.stdout.isatty():
 
 
 def extract_youtube_id(line):
-    """
-    Extract YouTube ID from a line using multiple patterns.
-    Returns ID or None.
-    """
-    # Pattern 1: location_id as a quoted string (7th value)
-    # Find the 7th quoted string – simple, but may fail if quotes inside.
-    # We'll use regex for YouTube IDs in typical positions.
+    """Extract YouTube ID from a line using multiple patterns."""
     patterns = [
-        # location_id: ..., 'ABC123DEF', ...
-        r",\s*'([a-zA-Z0-9_-]{11})'\s*,",          # standard quote
-        r",\s*N'([a-zA-Z0-9_-]{11})'\s*,",         # N'...'
-        # from video_path URL
+        r",\s*'([a-zA-Z0-9_-]{11})'\s*,",
+        r",\s*N'([a-zA-Z0-9_-]{11})'\s*,",
         r"https?://(?:www\.)?youtube\.com/watch\?v=([a-zA-Z0-9_-]{11})",
         r"https?://youtu\.be/([a-zA-Z0-9_-]{11})",
-        # any 11-char string that looks like a YouTube ID (last resort)
         r"'([a-zA-Z0-9_-]{11})'",
     ]
     for pat in patterns:
@@ -58,61 +47,46 @@ def extract_youtube_id(line):
         if match:
             return match.group(1)
 
-    # Handle NCHAR concatenation
-    nchar_match = re.findall(r"NCHAR\((\d+)\)", line)
-    if nchar_match:
-        # Build the string from ASCII codes
-        result = ''.join(chr(int(num)) for num in nchar_match)
-        # Remove any quotes or extra chars
+    # NCHAR concatenation
+    nchar_nums = re.findall(r"NCHAR\((\d+)\)", line)
+    if nchar_nums:
+        result = ''.join(chr(int(n)) for n in nchar_nums)
         result = re.sub(r"'|\+", '', result).strip()
-        if len(result) > 0:
+        if result:
             return result
     return None
 
 
 def get_video_name(line):
-    """
-    Extract video name (second value) for display – best effort.
-    """
-    # Find the second quoted string (after video_id)
-    # video_id is first, video_name is second
+    """Extract video name (second quoted string) for display."""
     matches = re.findall(r"'([^']*)'", line)
     if len(matches) >= 2:
-        return matches[1]  # second quoted string
+        return matches[1]
     return "Unknown"
 
 
 def replace_last_value(line, new_value):
-    """
-    Replace the last quoted value in the VALUES list with new_value.
-    This assumes the last value is video_availability.
-    """
-    # Find the last occurrence of a quoted string (including N'...')
-    # We'll use a regex that matches both '...' and N'...'
-    pattern = r"(N?'[^']*')"  # captures quoted strings, including N''
+    """Replace the last quoted value in the line with new_value."""
+    pattern = r"(N?'[^']*')"
     matches = list(re.finditer(pattern, line))
     if not matches:
-        return line  # no quoted value found – leave unchanged
-
-    last_match = matches[-1]
-    start, end = last_match.span()
-    # Preserve the quoting style
-    old = last_match.group(0)
+        return line
+    last = matches[-1]
+    start, end = last.span()
+    old = last.group(0)
     if old.startswith("N'") and old.endswith("'"):
         new_quoted = f"N'{new_value}'"
     else:
         new_quoted = f"'{new_value}'"
-
-    # Replace only that occurrence
     return line[:start] + new_quoted + line[end:]
 
 
 def check_video_status(video_id):
     """
-    Check YouTube video availability using public methods.
+    Check YouTube video availability using oEmbed + page scraping.
     Returns (status_code, message)
     """
-    # Try oEmbed first
+    # 1. Try oEmbed
     oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
     try:
         resp = requests.get(oembed_url, timeout=5)
@@ -120,28 +94,35 @@ def check_video_status(video_id):
             return 1, "Available"
         elif resp.status_code == 404:
             return -2, "Not found"
-        # 401/403 -> need fallback
+        # 401/403 -> need to scrape
     except:
         pass
 
-    # Fallback: scrape video page
+    # 2. Scrape video page
     watch_url = f"https://www.youtube.com/watch?v={video_id}"
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
     try:
         resp = requests.get(watch_url, headers=headers, timeout=5)
         if resp.status_code == 200:
             content = resp.text.lower()
-            if 'video unavailable' in content:
-                return -2, "Unavailable"
-            if 'private video' in content:
-                return -3, "Private"
+            # Check for various error messages
+            if 'video unavailable' in content or 'this video is not available' in content:
+                return -2, "Video unavailable"
+            if 'private video' in content or 'this video is private' in content:
+                return -3, "Private video"
             if 'sign in to confirm your age' in content:
                 return -5, "Age restricted"
             if 'embeddable":false' in content:
                 return -1, "Not embeddable"
+            if 'members only' in content:
+                return -4, "Members only"
+            # If none of the above, assume available
             return 1, "Available"
         elif resp.status_code == 404:
-            return -2, "Not found"
+            return -2, "Page not found"
         else:
             return -5, f"HTTP {resp.status_code}"
     except Exception as e:
@@ -159,9 +140,9 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
     with open(file_path, 'r', encoding='utf-8') as f:
         lines = f.readlines()
 
-    # First pass: collect all unique video IDs
-    video_id_map = {}  # id -> first video name (for display)
-    line_info = []     # list of (line_index, video_id, old_line, video_name)
+    # Collect video IDs and line info
+    video_id_map = {}      # id -> first video name
+    line_info = []         # (idx, id, old_line, name)
 
     for idx, line in enumerate(lines):
         if not re.search(r'INSERT\s+INTO\s+video|INSERT\s+\[dbo\]\.\[Video\]', line, re.IGNORECASE):
@@ -175,7 +156,6 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
 
     if not line_info:
         logger.warning("No video lines found.")
-        # Write unchanged file
         out_path = os.path.join(output_dir, os.path.basename(file_path).replace('.sql', '_checked.sql'))
         with open(out_path, 'w', encoding='utf-8') as f:
             f.writelines(lines)
@@ -237,11 +217,12 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
     modified = 0
     for idx, vid, old_line, _ in line_info:
         new_status = status_results.get(vid, -5)
-        old_avail_match = re.search(r"'(.)'\)?;?\s*$", old_line)  # last quoted char before )
+        # Check if it actually changed (avoid unnecessary writes)
+        old_avail_match = re.search(r"'(-?\d)'\)?;?\s*$", old_line)
         if old_avail_match:
             old_avail = old_avail_match.group(1)
             if str(old_avail) == str(new_status):
-                continue  # no change
+                continue
         new_line = replace_last_value(old_line, new_status)
         if new_line != old_line:
             new_lines[idx] = new_line
@@ -267,7 +248,7 @@ def process_file(file_path, output_dir='.', backup=False, delay=0.5, no_color=Fa
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Line‑by‑line YouTube video availability checker for SQL files.')
+    parser = argparse.ArgumentParser(description='Check YouTube video availability in SQL files')
     parser.add_argument('files', nargs='+', help='SQL files to process')
     parser.add_argument('--output-dir', default='.', help='Output directory')
     parser.add_argument('--backup', action='store_true', help='Backup and overwrite original')

@@ -26,22 +26,7 @@ public class AlbumContainsArtistCntr {
         return rep.retrieveAll();
     }
 
-    // Find by Discogs IDs
-    @Transactional
-    @GetMapping(value = "/find", produces = MediaType.APPLICATION_JSON_VALUE)
-    public AlbumContainsArtistDTO findByDiscogsIds(
-            @RequestParam int discogsArtistId,
-            @RequestParam int discogsReleaseId) {
-        AlbumContainsArtist aca = rep.findByDiscogsIds(discogsArtistId, discogsReleaseId);
-        return aca != null ? AlbumContainsArtistDTO.fromEntity(aca) : null;
-    }
-
-    // Delete endpoint
-    @Transactional
-    @DeleteMapping(value = "/delete")
-    public void deleteByDiscogsIds(
-            @RequestParam int discogsArtistId,
-            @RequestParam int discogsReleaseId) {
-        rep.deleteByDiscogsIds(discogsArtistId, discogsReleaseId);
-    }
-}
+    //TODO// Find by Discogs IDs
+    
+    //TODO// Delete endpoint
+}    
