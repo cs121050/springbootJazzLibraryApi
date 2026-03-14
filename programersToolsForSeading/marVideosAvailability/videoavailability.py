@@ -2,7 +2,7 @@
 """
 Line‑by‑line YouTube video availability checker for SQL files.
 Detects: available, not embeddable, does not exist, private, members only, other errors.
-Now also catches "removed for violating Terms of Service" as does not exist (-2).
+Now correctly handles embed-disabled videos.
 """
 
 import os
@@ -77,6 +77,10 @@ def replace_last_value(line, new_value):
 
 
 def check_video_status(video_id):
+    """
+    Check YouTube video availability using oEmbed + page scraping.
+    Returns (status_code, message)
+    """
     # 1. Try oEmbed
     oembed_url = f"https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v={video_id}&format=json"
     try:
@@ -85,6 +89,7 @@ def check_video_status(video_id):
             return 1, "Available"
         elif resp.status_code == 404:
             return -2, "Not found"
+        # 401/403 -> need to scrape
     except:
         pass
 
@@ -98,22 +103,35 @@ def check_video_status(video_id):
         resp = requests.get(watch_url, headers=headers, timeout=5)
         if resp.status_code == 200:
             content = resp.text.lower()
-            # Combined check for "does not exist" messages
+
+            # Embed-disabled first
+            if ('embeddable":false' in content or
+                'playback on other websites has been disabled' in content):
+                return -1, "Not embeddable"
+
+            # Private
+            if 'private video' in content or 'this video is private' in content:
+                return -3, "Private video"
+
+            # Age restricted
+            if 'sign in to confirm your age' in content:
+                return -5, "Age restricted"
+
+            # Members only
+            if 'members only' in content:
+                return -4, "Members only"
+
+            # Truly gone
             if any(phrase in content for phrase in [
                 'video unavailable',
                 'this video is not available',
                 'has been removed for violating youtube\'s terms of service'
             ]):
                 return -2, "Video unavailable/removed"
-            if 'private video' in content or 'this video is private' in content:
-                return -3, "Private video"
-            if 'sign in to confirm your age' in content:
-                return -5, "Age restricted"
-            if 'embeddable":false' in content:
-                return -1, "Not embeddable"
-            if 'members only' in content:
-                return -4, "Members only"
+
+            # Default
             return 1, "Available"
+
         elif resp.status_code == 404:
             return -2, "Page not found"
         else:

@@ -1,6 +1,7 @@
 package com.nicosarr.jazzLibraryAPI.AlbumContainsArtist;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.nicosarr.jazzLibraryAPI.Album.Album;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Video.Video;
@@ -9,6 +10,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "AlbumContainsArtist")
+@JacksonXmlRootElement(localName = "videoContainsArtist")
 public class AlbumContainsArtist {
 
     @EmbeddedId

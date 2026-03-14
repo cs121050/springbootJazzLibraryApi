@@ -6906,16 +6906,16 @@
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (3218, 190);
 	--album
 	
-	INSERT INTO Album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
-	VALUES (1, 7603681, 'Organic', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'Bossa Nova,Soul-Jazz,Smooth Jazz,Jazz-Funk,Modal,Jazz-Rock', NULL, NULL, 8729864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	INSERT INTO album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
+	VALUES (1, 7603681, 'Organic1', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'Bossa Nova,Soul-Jazz,Smooth Jazz,Jazz-Funk,Modal,Jazz-Rock', NULL, NULL, 8729864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	
-	INSERT INTO Album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
-	VALUES (2, 7603682, 'Organic', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HAHAHAHAHAH', NULL, NULL, 8728464, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	INSERT INTO album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
+	VALUES (2, 7603682, 'Organic2', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HAHAHAHAHAH', NULL, NULL, 8728464, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 	
-	INSERT INTO Album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
-	VALUES (3, 7603683, 'Organic', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HOHOHOHOHO', NULL, NULL, 8728864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	INSERT INTO album (album_id, release_id, title, year, country, released, released_formatted, notes, genres, styles, date_added, date_changed, master_id, master_url, uri, thumb, companies, extra_artists, images, labels, tracklist, videos, rating_count, rating_average)
+	VALUES (3, 7603683, 'Organic3', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HOHOHOHOHO', NULL, NULL, 8728864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 		
-	SELECT setval('album_albume_id_seq', (SELECT max(album_id) FROM album));
+	SELECT setval('album_album_id_seq', (SELECT max(album_id) FROM album));
 	
 	--albumco
 	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) 
