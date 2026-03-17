@@ -1,8 +1,8 @@
 ﻿#!/usr/bin/env python3
 """
-Extracts artist information from an SQL file (8‑field format), fetches all studio albums
-from MusicBrainz, enriches with Wikipedia URLs, Discogs master data, and Cover Art Archive
-thumbnails, and outputs as JSON Lines with a consolidated structure.
+Extracts artist MBIDs from an SQL file, fetches all studio albums from MusicBrainz,
+enriches with Wikipedia URLs, Discogs master data, and Cover Art Archive thumbnails,
+and outputs as JSON Lines.
 """
 
 import argparse
@@ -10,8 +10,6 @@ import json
 import re
 import time
 import sys
-import csv
-from io import StringIO
 from datetime import datetime
 from urllib.parse import quote
 
@@ -33,7 +31,7 @@ USER_AGENT = "MusicBrainzAlbumCollector/1.0 (https://example.com)"
 MAX_RETRIES = 3
 BASE_RETRY_DELAY_SEC = 5
 
-# Global last‑request timestamps (as mutable lists)
+# Global last‑request timestamps (as mutable lists for easy updating)
 _last_mb_request = [datetime.now()]
 _last_discogs_request = [datetime.now()]
 _last_wikipedia_request = [datetime.now()]
@@ -135,7 +133,7 @@ def call_discogs_api(url, token=None):
     return None
 
 def call_wikipedia_search_api(artist_name, album_title):
-    _rate_limit(WIKIPEDIA_MIN_INTERVAL_MS, _last_wikipedia_request)
+    _rate_limit(WIKIPEDIA_MIN_INTERVAL_MS, _last_wikipedia_request)   # FIXED TYPO
     query = f"{album_title} {artist_name} album"
     encoded = quote(query)
     url = f"https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={encoded}&format=json&utf8=1"
@@ -219,9 +217,7 @@ def get_discogs_master_data(discogs_id, token):
             'year': data.get('year'),
             'genres': data.get('genres'),
             'styles': data.get('styles'),
-            'tracklist': data.get('tracklist'),
-            'title': data.get('title'),
-            'barcode': data.get('barcode')
+            'tracklist': data.get('tracklist')
         }
     log_info("Master not found, trying as release ID...", indent=3)
     release_url = f"{DISCOGS_API_URL}/releases/{discogs_id}"
@@ -236,90 +232,23 @@ def get_discogs_master_data(discogs_id, token):
             'year': data.get('year'),
             'genres': data.get('genres'),
             'styles': data.get('styles'),
-            'tracklist': data.get('tracklist'),
-            'title': data.get('title'),
-            'barcode': data.get('barcode'),
-            'labels': data.get('labels')
+            'tracklist': data.get('tracklist')
         }
     return None
-
-# ------------------------------------------------------------
-# SQL parsing (new 8‑field format)
-# ------------------------------------------------------------
-def _parse_sql_inserts(sql_content):
-    """
-    Parses INSERT statements of the form:
-    INSERT [dbo].[Artist] ([col1], [col2], ...) VALUES (val1, 'val2', ...)
-    Returns a list of dicts with keys from the column list.
-    """
-    artists = []
-    lines = sql_content.splitlines()
-    insert_pattern = re.compile(
-        r"INSERT\s+.*?\[Artist\]\s*\((.+?)\)\s*VALUES\s*\((.+)\)",
-        re.IGNORECASE | re.DOTALL
-    )
-
-    for line in lines:
-        line = line.strip()
-        if not line.upper().startswith("INSERT"):
-            continue
-        match = insert_pattern.search(line)
-        if not match:
-            log_warning(f"Skipping line that does not match expected INSERT format: {line[:80]}...")
-            continue
-
-        columns_str = match.group(1)
-        values_str = match.group(2)
-
-        # Parse column names (they are enclosed in brackets, possibly with spaces)
-        col_matches = re.findall(r'\[([^\]]+)\]', columns_str)
-        if not col_matches:
-            log_warning(f"Could not extract column names from: {columns_str}")
-            continue
-
-        # Parse values using csv.reader with single quote as quotechar
-        f = StringIO(values_str)
-        reader = csv.reader(f, quotechar="'", skipinitialspace=True, doublequote=False)
-        try:
-            values = next(reader)
-        except StopIteration:
-            log_warning(f"Could not parse values from: {values_str}")
-            continue
-
-        # Clean up values: strip whitespace, handle NULL (None)
-        cleaned_values = []
-        for v in values:
-            v = v.strip()
-            if v == '' or v.upper() == 'NULL':
-                cleaned_values.append(None)
-            else:
-                cleaned_values.append(v)
-
-        # Map columns to values
-        artist_dict = {}
-        for i, col in enumerate(col_matches):
-            if i < len(cleaned_values):
-                artist_dict[col] = cleaned_values[i]
-            else:
-                artist_dict[col] = None
-
-        artists.append(artist_dict)
-
-    return artists
 
 # ------------------------------------------------------------
 # Main script
 # ------------------------------------------------------------
 def main():
     parser = argparse.ArgumentParser(description="Fetch MusicBrainz albums enriched with Wikipedia, Discogs, and Cover Art.")
-    parser.add_argument("SqlFile", help="Path to the SQL file containing the artist MBIDs (8‑field format).")
+    parser.add_argument("SqlFile", help="Path to the SQL file containing the artist MBIDs.")
     parser.add_argument("-OutputFile", default="mb_albums_enriched.jsonl", help="Output .jsonl file path.")
     parser.add_argument("-IncludeAllReleaseGroups", action="store_true", help="Include all release groups (not just studio albums).")
     parser.add_argument("-DiscogsToken", default="", help="Your Discogs personal access token.")
     args = parser.parse_args()
 
     # ------------------------------------------------------------
-    # Read and parse SQL file (new 8‑field format)
+    # Extract MBIDs from SQL file
     # ------------------------------------------------------------
     log_info(f"Reading SQL file '{args.SqlFile}'...")
     try:
@@ -329,19 +258,24 @@ def main():
         log_error(f"Cannot read SQL file: {e}")
         sys.exit(1)
 
-    artists_data = _parse_sql_inserts(sql_content)
-    if not artists_data:
-        log_error("No artist records found in SQL file. Exiting.")
+    uuid_pattern = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+    matches = re.findall(uuid_pattern, sql_content, re.IGNORECASE)
+    mbids = set()
+    for m in matches:
+        clean = m.strip()
+        clean = re.sub(r'[^\x20-\x7E]', '', clean)
+        if clean:
+            mbids.add(clean)
+    mbids = sorted(mbids)
+
+    log_info(f"Found {len(mbids)} unique artist MBIDs.")
+    if not mbids:
+        log_error("No MBIDs found. Exiting.")
         sys.exit(1)
 
-    log_info(f"Parsed {len(artists_data)} artist records from SQL.")
-
-    # Log the first few artists with all fields to confirm parsing
-    log_info("First 5 parsed artists (showing all fields):")
-    for i, artist in enumerate(artists_data[:5]):
-        log_info(f"  Artist {i+1}:")
-        for key, value in artist.items():
-            log_info(f"    {key}: {value}", indent=2)
+    log_info("First 5 MBIDs:")
+    for i, mbid in enumerate(mbids[:5]):
+        log_info(f"  {i+1}: '{mbid}' (length: {len(mbid)})")
 
     # ------------------------------------------------------------
     # Prepare output file
@@ -350,32 +284,24 @@ def main():
         open(args.OutputFile, 'w').close()
     log_info(f"Output will be written to '{args.OutputFile}'")
 
-    total_artists = len(artists_data)
+    total_artists = len(mbids)
     artist_counter = 0
     albums_written = 0
 
     # ------------------------------------------------------------
     # Process each artist
     # ------------------------------------------------------------
-    for artist_info in artists_data:
+    for raw_mbid in mbids:
         artist_counter += 1
-        current_mbid = artist_info.get('musicbrainz_uuid')
-        if not current_mbid:
-            log_warning(f"[{artist_counter}/{total_artists}] Skipping artist with missing musicbrainz_uuid: {artist_info}")
-            continue
-
-        # Sanitize MBID (remove any non‑ASCII if present)
-        current_mbid = re.sub(r'[^\x20-\x7E]', '', current_mbid.strip())
+        current_mbid = raw_mbid.strip()
+        current_mbid = re.sub(r'[^\x20-\x7E]', '', current_mbid)
 
         log_info(f"[{artist_counter}/{total_artists}] Processing artist {current_mbid}")
+        if not current_mbid:
+            log_warning("Skipping empty MBID", indent=1)
+            continue
 
-        # Log SQL‑provided fields for this artist (for debugging, not included in output)
-        log_info("SQL fields for this artist (not in output):", indent=1)
-        for key, value in artist_info.items():
-            if key != 'musicbrainz_uuid':
-                log_info(f"  {key}: {value}", indent=2)
-
-        # 1. Get artist metadata from MusicBrainz
+        # 1. Get artist metadata
         artist_url = f"{MUSICBRAINZ_API_URL}/artist/{current_mbid}?fmt=json"
         try:
             artist = call_musicbrainz_api(artist_url)
@@ -383,7 +309,7 @@ def main():
                 log_error(f"Failed to fetch artist {current_mbid}: no data", indent=1)
                 continue
             artist_name = artist.get('name', 'Unknown')
-            log_info(f"MusicBrainz artist name: {artist_name}", indent=1)
+            log_info(f"Artist: {artist_name}", indent=1)
         except Exception as e:
             log_error(f"Failed to fetch artist {current_mbid}: {e}", indent=1)
             continue
@@ -416,32 +342,16 @@ def main():
                         rg_title = rg.get('title', 'Unknown')
                         log_info(f"-> Processing release group: {rg_title} (ID: {rg_id})", indent=2)
 
-                        # 3. Wikipedia URL: use SQL field if present, otherwise search or extract from MB relations
-                        wikipedia_url = None
-                        sql_wiki = artist_info.get('wikipedia_url')
-                        if sql_wiki:
-                            log_info(f"Using Wikipedia URL from SQL: {sql_wiki}", indent=3)
-                            wikipedia_url = sql_wiki
-                        else:
-                            # Try from MusicBrainz relations first
-                            wikipedia_url = extract_wikipedia_from_relations(rg)
-                            if not wikipedia_url:
-                                # Fallback to search
-                                wikipedia_url = call_wikipedia_search_api(artist_name, rg_title)
+                        # 3. Extract Wikipedia URL from release group relations
+                        wikipedia_url_from_mb = extract_wikipedia_from_relations(rg)
 
-                        # 4. Discogs ID: use SQL field if present, otherwise extract from relations
-                        discogs_master_id = None
-                        discogs_release_id = None
-                        sql_discogs = artist_info.get('discogs_id')
-                        if sql_discogs:
-                            # SQL discogs_id could be integer or string; convert to string for API
-                            discogs_master_id = str(sql_discogs)
-                            log_info(f"Using Discogs ID from SQL: {discogs_master_id}", indent=3)
-                        else:
-                            # Extract from release group relations
-                            discogs_master_id, discogs_release_id = extract_discogs_ids_from_relations(rg.get('relations', []))
+                        # 4. Fetch Wikipedia URL via Wikipedia search API
+                        wikipedia_url_from_search = call_wikipedia_search_api(artist_name, rg_title)
 
-                        # 5. Get all releases for this release group
+                        # 5. Extract Discogs IDs from release group relations
+                        discogs_master_id, discogs_release_id = extract_discogs_ids_from_relations(rg.get('relations', []))
+
+                        # 6. Get all releases for this release group
                         releases_url = f"{MUSICBRAINZ_API_URL}/release?release-group={rg_id}&fmt=json"
                         try:
                             releases_response = call_musicbrainz_api(releases_url)
@@ -460,21 +370,17 @@ def main():
                                 first_release = releases[0]
                                 log_info(f"First release: {first_release.get('title')} (ID: {first_release.get('id')}, Date: {first_release.get('date')})", indent=3)
 
-                                # 6. Fetch full metadata of the first release
+                                # 7. Fetch full metadata of the first release
                                 release_detail_url = f"{MUSICBRAINZ_API_URL}/release/{first_release['id']}?inc=recordings+labels+artist-credits+url-rels&fmt=json"
                                 try:
                                     release_detail = call_musicbrainz_api(release_detail_url)
                                     if release_detail:
-                                        # If we didn't get Discogs ID from SQL, try extracting from release relations
-                                        if not sql_discogs:
-                                            rel_master, rel_release = extract_discogs_ids_from_relations(release_detail.get('relations', []))
-                                            if not discogs_master_id:
-                                                discogs_master_id = rel_master
-                                            if not discogs_release_id:
-                                                discogs_release_id = rel_release
+                                        rel_master, rel_release = extract_discogs_ids_from_relations(release_detail.get('relations', []))
+                                        master_discogs_id = discogs_master_id or rel_master
+                                        release_discogs_id = discogs_release_id or rel_release
 
                                         discogs_data = None
-                                        discogs_id_to_use = discogs_master_id or discogs_release_id
+                                        discogs_id_to_use = master_discogs_id or release_discogs_id
                                         if discogs_id_to_use:
                                             log_info(f"Fetching Discogs metadata for ID: {discogs_id_to_use}", indent=3)
                                             discogs_data = get_discogs_master_data(discogs_id_to_use, args.DiscogsToken)
@@ -483,91 +389,29 @@ def main():
 
                                         cover_image = check_coverart_thumbnail(rg_id)
 
-                                        # ------------------------------------------------------------
-                                        # Build new consolidated output structure (without sql_metadata)
-                                        # ------------------------------------------------------------
-                                        artist_obj = {
-                                            'id': current_mbid,
-                                            'name': artist_name
-                                        }
-
-                                        # Extract tracks from first release (simplified)
-                                        tracks_mb = []
-                                        for media in release_detail.get('media', []):
-                                            for track in media.get('tracks', []):
-                                                tracks_mb.append({
-                                                    'number': track.get('number'),
-                                                    'title': track.get('title'),
-                                                    'length': track.get('length'),
-                                                    'recording_id': track.get('recording', {}).get('id') if track.get('recording') else None
-                                                })
-
-                                        release_obj = {
-                                            'ids': {
-                                                'musicbrainz_release_group': rg_id,
-                                                'musicbrainz_first_release': release_detail.get('id'),
-                                                'discogs': {
-                                                    'master': discogs_master_id,
-                                                    'release': discogs_release_id
-                                                }
-                                            },
-                                            'titles': {
-                                                'musicbrainz_release_group': rg_title,
-                                                'musicbrainz_first_release': release_detail.get('title'),
-                                                'discogs': discogs_data.get('title') if discogs_data else None
-                                            },
-                                            'dates': {
-                                                'musicbrainz_release_group_first_release': rg.get('first-release-date'),
-                                                'musicbrainz_first_release': release_detail.get('date'),
-                                                'discogs': discogs_data.get('year') if discogs_data else None
-                                            },
-                                            'types': {
-                                                'musicbrainz_primary_type': rg.get('primary-type'),
-                                                'musicbrainz_secondary_types': rg.get('secondary-types') or [],
-                                                'discogs_genres': discogs_data.get('genres') or [] if discogs_data else [],
-                                                'discogs_styles': discogs_data.get('styles') or [] if discogs_data else []
-                                            },
-                                            'ratings': {
-                                                'discogs_rating_count': discogs_data.get('rating_count') if discogs_data else None,
-                                                'discogs_rating_average': discogs_data.get('rating_average') if discogs_data else None
-                                            },
-                                            'cover_image_small': cover_image,
-                                            'wikipedia_urls': {
-                                                'from_musicbrainz': extract_wikipedia_from_relations(rg) if not sql_wiki else None,
-                                                'from_search': wikipedia_url if not sql_wiki and not extract_wikipedia_from_relations(rg) else None,
-                                                'from_sql': sql_wiki
-                                            },
-                                            'relations': {
-                                                'musicbrainz_release_group': rg.get('relations') or [],
-                                                'musicbrainz_first_release': release_detail.get('relations') or []
-                                            },
-                                            'tracks': {
-                                                'musicbrainz_first_release': tracks_mb,
-                                                'discogs': discogs_data.get('tracklist') or [] if discogs_data else []
-                                            },
-                                            'media': {
-                                                'musicbrainz_first_release': release_detail.get('media') or [],
-                                                'discogs': discogs_data.get('media') or [] if discogs_data else []   # Discogs master may not have media
-                                            },
-                                            'labels': {
-                                                'musicbrainz_first_release': release_detail.get('label-info') or [],
-                                                'discogs': discogs_data.get('labels') or [] if discogs_data else []
-                                            },
-                                            'barcode': {
-                                                'musicbrainz_first_release': release_detail.get('barcode'),
-                                                'discogs': discogs_data.get('barcode') if discogs_data else None
-                                            },
-                                            'asin': release_detail.get('asin'),
-                                            'country': release_detail.get('country'),
-                                            'status': release_detail.get('status'),
-                                            'packaging': release_detail.get('packaging'),
-                                            'quality': release_detail.get('quality'),
-                                            'discogs_images': discogs_data.get('images') or [] if discogs_data else []
+                                        release_group_obj = {
+                                            'id': rg_id,
+                                            'title': rg_title,
+                                            'first-release-date': rg.get('first-release-date'),
+                                            'primary-type': rg.get('primary-type'),
+                                            'secondary-types': rg.get('secondary-types'),
+                                            'discogs_id': discogs_id_to_use,
+                                            'master_discogs_id': master_discogs_id,
+                                            'release_discogs_id': release_discogs_id,
+                                            'relations': rg.get('relations'),
+                                            'wikipedia_url': wikipedia_url_from_mb,
+                                            'wikipedia_url_search': wikipedia_url_from_search,
+                                            'cover_image_small': cover_image
                                         }
 
                                         output = {
-                                            'artist': artist_obj,
-                                            'release': release_obj
+                                            'artist': {
+                                                'id': current_mbid,
+                                                'name': artist_name
+                                            },
+                                            'release_group': release_group_obj,
+                                            'discogs': discogs_data,
+                                            'first_release': release_detail
                                         }
 
                                         with open(args.OutputFile, 'a', encoding='utf-8') as out_f:

@@ -7,11 +7,11 @@
     This script:
       1. Reads a SQL file containing INSERT statements for the [dbo].[Artist] table,
          extracting discogs_id, musicbrainz_uuid, artist_name, artist_surname, wikipedia_url.
+         The SQL now includes an `artist_id` field as the first column.
       2. Reads a JSONL file (mb_albums_ofartists.jsonl) containing album metadata from MusicBrainz,
          and builds a lookup table keyed by the Discogs album ID found inside each record.
          The ID is taken from `release_group.discogs_id` if present, otherwise from
-         `release_group.release_discogs_id`.  (The new MusicBrainz structure places the
-         Discogs ID in one of these two fields.)
+         `release_group.release_discogs_id`.
       3. For each unique Discogs artist ID, queries the Discogs API for all releases where
          the artist has role "Main", retrieves full metadata for each album (master or standalone),
          and if the album's Discogs ID exists in the lookup table, injects the corresponding
@@ -26,13 +26,13 @@
          "discogs_all_versions_Ids" inside the DiscogsAPIcall object.
       7. Respects Discogs rate limits (25 requests/minute for unauthenticated calls).
 .PARAMETER SqlFile
-    Path to the SQL file containing the INSERT statements.
+    Path to the SQL file containing the INSERT statements (now includes `artist_id` as first column).
 .PARAMETER MusicBrainzFile
     Path to the JSONL file containing MusicBrainz album data (default: "mb_albums_ofartists.jsonl").
 .PARAMETER OutputFile
     Path where the output .jsonl file will be saved (default: "discogs_releases.jsonl").
 .EXAMPLE
-    .\Get-AllArtistsReleasesNoToken.ps1 -SqlFile "_artists_without_quotes.sql" -MusicBrainzFile "mb_albums_ofartists.jsonl"
+    .\DiscogsAlbumDownloader_addArtistData_addMusicBrainzAlbumDataVol2.ps1 -SqlFile "artists_with_wiki_INPUT.sql" -MusicBrainzFile "mb_albums_enriched.jsonl"
 #>
 
 param(
@@ -121,6 +121,7 @@ $sqlLines = Get-Content -Path $SqlFile
 $discogsIds = @()
 $artistMap = @{}   # key = discogs_id, value = PSObject with artist metadata
 
+# Updated pattern for INSERT with 8 columns (artist_id added at the beginning)
 $insertPattern = '^\s*INSERT\s+\[dbo\]\.\[Artist\]\s*\([^)]+\)\s*VALUES\s*\((.+)\)\s*$'
 
 foreach ($line in $sqlLines) {
@@ -130,15 +131,17 @@ foreach ($line in $sqlLines) {
         # Split values by comma and trim quotes
         $values = $valuesPart -split ',' | ForEach-Object { $_.Trim().Trim("'") }
 
-        # Expecting at least 7 values (spotify_playlist_id, artist_name, artist_surname, musicbrainz_uuid, discogs_id, instrument_id, wikipedia_url)
-        if ($values.Count -ge 7) {
-            $spotifyId    = $values[0]
-            $artistName   = $values[1]
-            $artistSurname= $values[2]
-            $musicbrainzId= $values[3]
-            $discogsIdRaw = $values[4]
-            $instrumentId = $values[5]
-            $wikipediaUrl = $values[6]
+        # Now expecting 8 values: artist_id, spotify_playlist_id, artist_name, artist_surname,
+        # musicbrainz_uuid, discogs_id, instrument_id, wikipedia_url
+        if ($values.Count -ge 8) {
+            $artistId      = $values[0]   # not used directly, but could be stored if needed
+            $spotifyId     = $values[1]
+            $artistName    = $values[2]
+            $artistSurname = $values[3]
+            $musicbrainzId = $values[4]
+            $discogsIdRaw  = $values[5]
+            $instrumentId  = $values[6]
+            $wikipediaUrl  = $values[7]
 
             # Validate discogs_id is numeric
             if ($discogsIdRaw -match '^\d+$') {
@@ -146,15 +149,19 @@ foreach ($line in $sqlLines) {
 
                 # Store artist metadata
                 $artistMap[$discogsId] = [PSCustomObject]@{
-                    discogs_id      = $discogsId
+                    discogs_id       = $discogsId
                     musicbrainz_uuid = $musicbrainzId
                     artist_name      = $artistName
                     artist_surname   = $artistSurname
                     wikipedia_url    = $wikipediaUrl
                     full_name        = "$artistName $artistSurname".Trim()
+                    # Optionally store other fields if needed later:
+                    # artist_id        = $artistId
+                    # spotify_id       = $spotifyId
+                    # instrument_id    = $instrumentId
                 }
 
-                # Also keep list of unique Discogs IDs (original script used this)
+                # Also keep list of unique Discogs IDs
                 $discogsIds += $discogsId
             }
             else {
@@ -162,7 +169,7 @@ foreach ($line in $sqlLines) {
             }
         }
         else {
-            Write-Warning "Skipping line: not enough values (expected 7, got $($values.Count))"
+            Write-Warning "Skipping line: not enough values (expected 8, got $($values.Count))"
         }
     }
 }
