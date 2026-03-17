@@ -10,7 +10,7 @@ import jakarta.persistence.*;
 
 @Entity
 @Table(name = "AlbumContainsArtist")
-@JacksonXmlRootElement(localName = "videoContainsArtist")
+@JacksonXmlRootElement(localName = "albumContainsArtist")
 public class AlbumContainsArtist {
 
     @EmbeddedId

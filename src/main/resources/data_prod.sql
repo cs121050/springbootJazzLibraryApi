@@ -8,6 +8,8 @@
 	DELETE FROM Duration;
 	DELETE FROM Type;
 	DELETE FROM Quote;
+	DELETE FROM Album;
+	DELETE FROM AlbumContainsArtist;
 	
 	--instrument
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (1, 'Bass');
@@ -6918,13 +6920,13 @@
 	SELECT setval('album_album_id_seq', (SELECT max(album_id) FROM album));
 	
 	--albumco
-	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) 
+	INSERT INTO albumContainsArtist (artist_id, album_id, is_main) 
 	VALUES (1, 1, 1);
-	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) 
+	INSERT INTO albumContainsArtist (artist_id, album_id, is_main) 
 	VALUES (1, 2, 1);
-	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) 
+	INSERT INTO albumContainsArtist (artist_id, album_id, is_main) 
 	VALUES (1, 3, 1);
-	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) 
+	INSERT INTO albumContainsArtist (artist_id, album_id, is_main) 
 	VALUES (2, 3, 0);
 	
 	

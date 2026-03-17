@@ -3,14 +3,14 @@ package com.nicosarr.jazzLibraryAPI.AlbumContainsArtist;
 public class AlbumContainsArtistDTO {
 
     private int artistId;
-    private int discogsReleaseId;
+    private int albumId;
     private boolean isMain;
 
     public AlbumContainsArtistDTO() {}
 
-    public AlbumContainsArtistDTO(int artistId, int discogsReleaseId, boolean isMain) {
+    public AlbumContainsArtistDTO(int artistId, int albumId, boolean isMain) {
         this.artistId = artistId;
-        this.discogsReleaseId = discogsReleaseId;
+        this.albumId = albumId;
         this.isMain = isMain;
     }
 
@@ -33,12 +33,12 @@ public class AlbumContainsArtistDTO {
 		this.artistId = artistId;
 	}
 
-	public int getDiscogsReleaseId() {
-		return discogsReleaseId;
+	public int getAlbumId() {
+		return albumId;
 	}
 
-	public void setDiscogsReleaseId(int discogsReleaseId) {
-		this.discogsReleaseId = discogsReleaseId;
+	public void setAlbumId(int albumId) {
+		this.albumId = albumId;
 	}
 
 	public boolean isMain() {

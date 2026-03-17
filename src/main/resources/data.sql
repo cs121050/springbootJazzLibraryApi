@@ -8,6 +8,8 @@
 	DELETE FROM Duration;
 	DELETE FROM Type;
 	DELETE FROM Quote;
+	DELETE FROM Album;
+	DELETE FROM AlbumContainsArtist;
 
 	--Instrument
 	SET IDENTITY_INSERT instrument ON;
