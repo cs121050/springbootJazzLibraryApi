@@ -6,6 +6,8 @@ Handles both 7‑column (original) and 8‑column (with artist_id) INSERT format
 Now also performs a Wikipedia search for each album and adds the URL as a top-level field,
 while removing any existing wikipedia_url_search from the MusicBrainz data.
 If the album Wikipedia URL matches the artist's Wikipedia URL, the field is set to null.
+For each release, both master data (if available) and main release data are stored.
+A new field 'format_display' contains the full format description string.
 """
 
 import argparse
@@ -292,16 +294,33 @@ def extract_wiki_title(url):
 
 
 # ----------------------------------------------------------------------
+# Helper to build a full format display string from a release's formats array
+# ----------------------------------------------------------------------
+def build_format_display(formats):
+    """
+    Formats a Discogs 'formats' array into a human-readable string.
+    Example: [{"name":"Vinyl","descriptions":["LP","Album","Stereo"]}] -> "Vinyl, LP, Album, Stereo"
+    Multiple formats are separated by '; '.
+    """
+    if not formats:
+        return None
+    parts = []
+    for fmt in formats:
+        fmt_parts = [fmt.get('name', '')]
+        descriptions = fmt.get('descriptions', [])
+        if descriptions:
+            fmt_parts.extend(descriptions)
+        parts.append(', '.join(fmt_parts))
+    return '; '.join(parts)
+
+
+# ----------------------------------------------------------------------
 # Step 3: Process a single artist
 # ----------------------------------------------------------------------
 def process_artist(artist_id, artist_info, mb_lookup, output_file, session, last_request_time):
     """
-    Fetches all releases for the given artist, enriches with MusicBrainz,
-    and appends JSON lines to output_file.
-    Also performs a Wikipedia search for each album and adds the URL as a top-level field.
-    Removes any existing wikipedia_url_search from the MusicBrainz data.
-    If the album Wikipedia URL matches the artist's Wikipedia URL, the field is set to null.
-    Now also includes the artist_id from the SQL data in the artist object.
+    Fetches all releases for the given artist. For each release that is a main release,
+    retrieves the master (if any) and its main release, then writes one enriched JSON line.
     """
     releases_url = f"{BASE_API_URL}/artists/{artist_id}/releases"
     page = 1
@@ -320,127 +339,142 @@ def process_artist(artist_id, artist_info, mb_lookup, output_file, session, last
             print(f"  -> Found release: {release.get('title')} "
                   f"(ID: {release.get('id')}, type: {release.get('type')})")
 
+            master_obj = None
+            release_obj = None
+
             try:
+                # Case 1: The entry is a master
                 if release['type'] == 'master':
-                    full_url = f"{BASE_API_URL}/masters/{release['id']}"
-                else:
-                    full_url = release.get('resource_url')
+                    master_url = f"{BASE_API_URL}/masters/{release['id']}"
+                    master_obj = discogs_api_request(master_url, session, last_request_time)
 
-                full_data = discogs_api_request(full_url, session, last_request_time)
-                discogs_obj = None
+                    # Fetch the main release of this master
+                    main_release_id = master_obj.get('main_release')
+                    if main_release_id:
+                        release_url = f"{BASE_API_URL}/releases/{main_release_id}"
+                        release_obj = discogs_api_request(release_url, session, last_request_time)
+                    else:
+                        print("      Warning: master has no main_release – skipping")
+                        continue
 
-                if release['type'] == 'release' and full_data.get('master_id'):
-                    master_id = full_data['master_id']
-                    if master_id not in processed_masters:
+                # Case 2: The entry is a release
+                else:  # release['type'] == 'release'
+                    release_url = release.get('resource_url')
+                    release_obj = discogs_api_request(release_url, session, last_request_time)
+
+                    # If it belongs to a master, fetch that master and ensure we have the main release
+                    if release_obj.get('master_id'):
+                        master_id = release_obj['master_id']
                         master_url = f"{BASE_API_URL}/masters/{master_id}"
-                        master_data = discogs_api_request(master_url, session, last_request_time)
-                        processed_masters.add(master_id)
-                        discogs_obj = master_data
-                        print("      -> Fetched master (from child release)")
-                    else:
-                        print("      -> Skipping, master already processed")
-                        continue
+                        master_obj = discogs_api_request(master_url, session, last_request_time)
 
-                elif release['type'] == 'master':
-                    master_id = full_data['id']
-                    if master_id not in processed_masters:
-                        processed_masters.add(master_id)
-                        discogs_obj = full_data
-                        print("      -> Fetched master")
-                    else:
-                        print("      -> Skipping, master already processed")
-                        continue
+                        main_release_id = master_obj.get('main_release')
+                        # If the current release is not the main one, fetch the main release instead
+                        if main_release_id and main_release_id != release_obj['id']:
+                            release_url = f"{BASE_API_URL}/releases/{main_release_id}"
+                            release_obj = discogs_api_request(release_url, session, last_request_time)
+                    # else: standalone release – master_obj stays None
 
-                else:
-                    discogs_obj = full_data
-                    print("      -> Fetched standalone release")
+                # Skip if we already processed this master
+                if master_obj and master_obj['id'] in processed_masters:
+                    print("      -> Skipping, master already processed")
+                    continue
+                if master_obj:
+                    processed_masters.add(master_obj['id'])
 
-                if discogs_obj:
-                    # ----- Fetch all version IDs for masters -----
+                # At this point we always have a release_obj (main release or standalone)
+                if not release_obj:
+                    print("      Error: no release object obtained – skipping")
+                    continue
+
+                # ----- Fetch all version IDs for masters (enrich master object) -----
+                if master_obj:
                     all_version_ids = []
-                    if 'main_release' in discogs_obj:
-                        versions_url = discogs_obj.get('versions_url')
-                        if versions_url:
-                            try:
-                                print(f"      -> Fetching versions for master {discogs_obj['id']} "
-                                      f"from {versions_url}")
-                                vpage = 1
-                                while True:
-                                    vresp = discogs_api_request(
-                                        f"{versions_url}?page={vpage}&per_page=100",
-                                        session, last_request_time
-                                    )
-                                    if 'versions' in vresp:
-                                        all_version_ids.extend(v['id'] for v in vresp['versions'])
-                                    if vpage >= vresp.get('pagination', {}).get('pages', 1):
-                                        break
-                                    vpage += 1
-                            except Exception as e:
-                                print(f"      Warning: failed to fetch versions: {e}")
-                        else:
-                            print("      Warning: master has no versions_url")
+                    versions_url = master_obj.get('versions_url')
+                    if versions_url:
+                        try:
+                            print(f"      -> Fetching versions for master {master_obj['id']}")
+                            vpage = 1
+                            while True:
+                                vresp = discogs_api_request(
+                                    f"{versions_url}?page={vpage}&per_page=100",
+                                    session, last_request_time
+                                )
+                                if 'versions' in vresp:
+                                    all_version_ids.extend(v['id'] for v in vresp['versions'])
+                                if vpage >= vresp.get('pagination', {}).get('pages', 1):
+                                    break
+                                vpage += 1
+                        except Exception as e:
+                            print(f"      Warning: failed to fetch versions: {e}")
+                    master_obj['discogs_all_versions_Ids'] = all_version_ids
 
-                    discogs_obj['discogs_all_versions_Ids'] = all_version_ids
+                # ----- Wikipedia search for the album (using release title) -----
+                album_title = release_obj.get('title', '')
+                wiki_search_url = search_wikipedia(artist_info['full_name'], album_title)
+                had_wiki_search = wiki_search_url is not None
 
-                    # ----- Wikipedia search for the album -----
-                    album_title = discogs_obj.get('title', '')
-                    wiki_search_url = search_wikipedia(artist_info['full_name'], album_title)
-                    had_wiki_search = wiki_search_url is not None
+                # Compare album Wikipedia URL with artist Wikipedia URL
+                if had_wiki_search:
+                    artist_wiki = artist_info.get('wikipedia_url')
+                    if artist_wiki:
+                        album_title_part = extract_wiki_title(wiki_search_url)
+                        artist_title_part = extract_wiki_title(artist_wiki)
+                        if (album_title_part and artist_title_part and
+                                album_title_part == artist_title_part):
+                            print("      [Wikipedia] Album URL matches artist URL, setting to null.")
+                            wiki_search_url = None
 
-                    # NEW: Compare album Wikipedia URL with artist Wikipedia URL
-                    if had_wiki_search:
-                        artist_wiki = artist_info.get('wikipedia_url')
-                        if artist_wiki:
-                            album_title_part = extract_wiki_title(wiki_search_url)
-                            artist_title_part = extract_wiki_title(artist_wiki)
-                            if (album_title_part and artist_title_part and
-                                    album_title_part == artist_title_part):
-                                print("      [Wikipedia] Album URL matches artist URL, setting to null.")
-                                wiki_search_url = None  # will be output as null
+                # ----- MusicBrainz enrichment (keyed by release ID) -----
+                album_id = str(release_obj['id'])
+                mb_data = mb_lookup.get(album_id)
+                if mb_data:
+                    print(f"      -> Found matching MusicBrainz data for release ID {album_id}")
+                    mb_data_copy = copy.deepcopy(mb_data)
+                    # Remove any wikipedia_url_search from release_group
+                    if 'release_group' in mb_data_copy and isinstance(mb_data_copy['release_group'], dict):
+                        mb_data_copy['release_group'].pop('wikipedia_url_search', None)
+                else:
+                    print(f"      -> No MusicBrainz data for release ID {album_id}")
+                    mb_data_copy = None
 
-                    # ----- MusicBrainz enrichment (and remove its wikipedia_url_search) -----
-                    album_id = str(discogs_obj['id'])
-                    mb_data = mb_lookup.get(album_id)
-                    if mb_data:
-                        print(f"      -> Found matching MusicBrainz data for album ID {album_id}")
-                        # Make a deep copy to avoid modifying the lookup table
-                        mb_data_copy = copy.deepcopy(mb_data)
-                        # Remove the wikipedia_url_search field from release_group if present
-                        if 'release_group' in mb_data_copy and isinstance(mb_data_copy['release_group'], dict):
-                            mb_data_copy['release_group'].pop('wikipedia_url_search', None)
-                    else:
-                        print(f"      -> No MusicBrainz data for album ID {album_id}")
-                        mb_data_copy = None
+                # ----- Extract release type from formats (primary format name) -----
+                release_type = None
+                if release_obj.get('formats') and len(release_obj['formats']) > 0:
+                    # Often the first format's name is the primary type (e.g., "Vinyl")
+                    release_type = release_obj['formats'][0].get('name')
 
-                    # ----- Build output wrapper -----
-                    # Build the artist dictionary with all available fields
-                    artist_dict = {
-                        'artist_id': artist_info['artist_id'],
-                        'name': artist_info['full_name'],
-                        'wikipedia_url': artist_info['wikipedia_url'],
-                        'id': artist_info['musicbrainz_uuid'],
-                        'discogs_id': artist_id
-                    }
+                # ----- Build full format display string -----
+                format_display = build_format_display(release_obj.get('formats'))
 
+                # ----- Build output wrapper -----
+                artist_dict = {
+                    'artist_id': artist_info.get('artist_id'),
+                    'name': artist_info['full_name'],
+                    'wikipedia_url': artist_info['wikipedia_url'],
+                    'id': artist_info['musicbrainz_uuid'],
+                    'discogs_id': artist_id
+                }
 
-                    wrapper = {
-                        'artist': artist_dict,
-                        'DiscogsAPIcall': discogs_obj
-                    }
-                    if mb_data_copy:
-                        wrapper['MusicBrainzData'] = mb_data_copy
+                wrapper = {
+                    'artist': artist_dict,
+                    'release_type': release_type,
+                    'format_display': format_display,
+                    'release_data': release_obj
+                }
+                if master_obj:
+                    wrapper['master_data'] = master_obj
+                if mb_data_copy:
+                    wrapper['MusicBrainzData'] = mb_data_copy
+                if had_wiki_search:
+                    wrapper['wikipedia_url_search'] = wiki_search_url
 
-                    # Always add the wikipedia_url_search field if a search was performed,
-                    # even if it ended up as None (null) due to a match with the artist's page.
-                    if had_wiki_search:
-                        wrapper['wikipedia_url_search'] = wiki_search_url  # may be None
-
-                    with open(output_file, 'a', encoding='utf-8') as outf:
-                        json.dump(wrapper, outf, ensure_ascii=False, separators=(',', ':'))
-                        outf.write('\n')
+                with open(output_file, 'a', encoding='utf-8') as outf:
+                    json.dump(wrapper, outf, ensure_ascii=False, separators=(',', ':'))
+                    outf.write('\n')
 
             except Exception as e:
-                print(f"      Error processing {full_url}: {e}")
+                print(f"      Error processing release {release.get('id')}: {e}")
 
         if page >= data.get('pagination', {}).get('pages', 1):
             break

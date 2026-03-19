@@ -6930,27 +6930,25 @@
 	--album
 	SET IDENTITY_INSERT album ON;
 	
-INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [country], [released], [released_formatted], [notes], [genres], [styles], [date_added], [date_changed], [master_id], [master_url], [uri], [thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
-VALUES (1, 7603681, 'Organic1', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'Bossa Nova,Soul-Jazz,Smooth Jazz,Jazz-Funk,Modal,Jazz-Rock', NULL, NULL, 8729864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [release_format_description], [released], [released_formatted], [release_type], [genres], [styles], [date_added], [date_changed], [master_id], [youtube_video_id_for_thumbnail], [wikipedia_url], [coverartarchive_thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
+	VALUES (1, 7603681, 'Organic1', 1977, NULL, NULL, NULL, 'album', 'Jazz', 'Bossa Nova,Soul-Jazz,Smooth Jazz,Jazz-Funk,Modal,Jazz-Rock', NULL, NULL, 8729864, NULL, 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	
+	INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [release_format_description], [released], [released_formatted], [release_type], [genres], [styles], [date_added], [date_changed], [master_id], [youtube_video_id_for_thumbnail], [wikipedia_url], [coverartarchive_thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
+	VALUES (2, 7603682, 'Organic2', 1977, NULL, NULL, NULL, 'album', 'Jazz', 'HAHAHAHAHAH', NULL, NULL, 8728464, NULL, 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+	
+	INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [release_format_description], [released], [released_formatted], [release_type], [genres], [styles], [date_added], [date_changed], [master_id], [youtube_video_id_for_thumbnail], [wikipedia_url], [coverartarchive_thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
+	VALUES (3, 7603683, 'Organic3', 1977, NULL, NULL, NULL, 'album', 'Jazz', 'HOHOHOHOHO', NULL, NULL, 8728864, NULL, 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [country], [released], [released_formatted], [notes], [genres], [styles], [date_added], [date_changed], [master_id], [master_url], [uri], [thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
-VALUES (2, 7603682, 'Organic2', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HAHAHAHAHAH', NULL, NULL, 8728464, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-
-INSERT [dbo].[Album] ([album_id], [release_id], [title], [year], [country], [released], [released_formatted], [notes], [genres], [styles], [date_added], [date_changed], [master_id], [master_url], [uri], [thumb], [companies], [extra_artists], [images], [labels], [tracklist], [videos], [rating_count], [rating_average]) 
-VALUES (3, 7603683, 'Organic3', 1977, NULL, NULL, NULL, NULL, 'Jazz', 'HOHOHOHOHO', NULL, NULL, 8728864, 'https://api.discogs.com/masters/872864', 'https://www.discogs.com/master/872864-The-Victor-Burghardt-Mike-Barone-Orchestra-Featuring-Sal-Nistico-And-Alan-Skidmore-Organic', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
-
-			
 	SET IDENTITY_INSERT album OFF;
 	DBCC CHECKIDENT ('album', RESEED);
 	
 	
-INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
-VALUES (1, 1, 1);
-INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
-VALUES (1, 2, 1);
-INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
-VALUES (1, 3, 1);
-INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
-VALUES (2, 3, 0);
+	INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
+	VALUES (1, 1, 1);
+	INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
+	VALUES (1, 2, 1);
+	INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
+	VALUES (1, 3, 1);
+	INSERT [dbo].[AlbumContainsArtist] ([artist_id], [album_id], [is_main]) 
+	VALUES (2, 3, 0);
 

@@ -31,23 +31,4 @@ public class AlbumRep {
         List<Album> albums = query.getResultList();
         return albums.stream().map(AlbumWithArtistDTO::fromEntity).collect(Collectors.toList());
     }
-
-    // Find by Discogs release ID
-    public Album findByReleaseId(int releaseId) {
-        String jpql = "SELECT a FROM Album a WHERE a.release_id = :releaseId";
-        TypedQuery<Album> query = entityManager.createQuery(jpql, Album.class);
-        query.setParameter("releaseId", releaseId);
-        List<Album> results = query.getResultList();
-        return results.isEmpty() ? null : results.get(0);
-    }
-
-    // Save or update
-    public Album save(Album album) {
-        if (album.getAlbum_id() == 0) {
-            entityManager.persist(album);
-            return album;
-        } else {
-            return entityManager.merge(album);
-        }
-    }
 }

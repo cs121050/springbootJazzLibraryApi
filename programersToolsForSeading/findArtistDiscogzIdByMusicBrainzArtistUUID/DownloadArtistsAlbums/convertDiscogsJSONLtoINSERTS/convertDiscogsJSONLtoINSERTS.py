@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
 """
-Converts a Discogs JSON Lines file (with a top-level "DiscogsAPIcall" field)
+Converts a Discogs JSON Lines file (with top-level "release_data" field)
 into SQL INSERT statements for the Album and AlbumContainsArtist tables.
-Now includes an auto‑incrementing album_id and uses the internal artist_id
-from the top-level "artist" object for the main artist link.
-The extra_artists column stores only artist name and discogs_id.
-The images column stores only the primary image URI (string).
-The labels column stores only an array of label names (strings).
-The videos column stores each video without the 'description' field.
-The tracklist column stores only track title and simplified extraartists.
-The notes and uri fields have been removed.
+Now includes:
+- auto‑incrementing album_id
+- internal artist_id from top-level "artist" object (main artist link)
+- extra_artists: only artist name and discogs_id
+- images: only primary image URI (string) from Discogs
+- labels: only array of label names
+- videos: description field removed
+- tracklist: only track title and simplified extraartists (name, id)
+- genres: array of genre strings (JSON)
+- companies: array of company names (strings)
+- coverartarchive_thumb: MusicBrainz cover art thumbnail (from MusicBrainzData.release_group.cover_image_small)
+- wikipedia_url: Wikipedia URL (from top-level wikipedia_url_search)
+- release_format_description: stores the top-level "format_display" string (e.g., "CD, Album")
+- release_type: derived from release_format_description with the following precedence:
+    1. if contains 'single' or '7"' → 'single'
+    2. else if contains 'compilation' → 'compilation'
+    3. else if contains 'promo' → 'promo'
+    4. else if contains 'PAL' or 'NTSC' (case‑insensitive) and does NOT contain 'album' → 'video'
+    5. else 'album'
+- youtube_video_id_for_thumbnail: stores the YouTube video ID of the first video (if any), otherwise NULL
 """
 
 import argparse
@@ -92,9 +104,8 @@ def simplify_videos(videos):
     simplified = []
     for v in videos:
         if v and isinstance(v, dict):
-            # Create a copy without 'description'
             new_v = {k: v for k, v in v.items() if k != 'description'}
-            if new_v:  # only add if not empty
+            if new_v:
                 simplified.append(new_v)
     return simplified if simplified else None
 
@@ -112,11 +123,10 @@ def simplify_tracklist(tracklist):
             if 'title' in t:
                 new_t['title'] = t['title']
             if 'extraartists' in t and t['extraartists']:
-                # Simplify extraartists for this track
                 extra = simplify_extra_artists(t['extraartists'])
                 if extra:
                     new_t['extraartists'] = extra
-            if new_t:  # only add if at least title exists
+            if new_t:
                 simplified.append(new_t)
     return simplified if simplified else None
 
@@ -146,6 +156,18 @@ def simplify_labels(labels):
         return None
     return json.dumps(names, separators=(',', ':'), ensure_ascii=False)
 
+def simplify_companies(companies):
+    """
+    Convert the companies list to a list containing only the company names.
+    Returns a JSON string of the names array, or None if input is empty.
+    """
+    if not companies:
+        return None
+    names = [comp.get('name') for comp in companies if comp and comp.get('name')]
+    if not names:
+        return None
+    return json.dumps(names, separators=(',', ':'), ensure_ascii=False)
+
 def get_rating_count(community):
     """Extract rating count from the community object."""
     if community and isinstance(community, dict):
@@ -162,12 +184,41 @@ def get_rating_average(community):
             return rating.get('average')
     return None
 
+def get_musicbrainz_thumb(musicbrainz):
+    """
+    Extract the cover image thumbnail from MusicBrainzData.
+    Looks for musicbrainz.release_group.cover_image_small.
+    Returns None if not found.
+    """
+    if not musicbrainz or not isinstance(musicbrainz, dict):
+        return None
+    release_group = musicbrainz.get('release_group')
+    if release_group and isinstance(release_group, dict):
+        thumb = release_group.get('cover_image_small')
+        return thumb
+    return None
+
+def extract_youtube_video_id(url):
+    """Extract YouTube video ID from various YouTube URL formats."""
+    if not url:
+        return None
+    patterns = [
+        r'(?:youtube\.com/watch\?v=|youtu\.be/)([^&?#]+)',
+        r'youtube\.com/embed/([^&?#]+)',
+        r'youtube\.com/v/([^&?#]+)'
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            return match.group(1)
+    return None
+
 # ------------------------------------------------------------------------------
 # Main
 # ------------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description='Convert Discogs JSONL (with DiscogsAPIcall) to SQL INSERTs.')
+    parser = argparse.ArgumentParser(description='Convert Discogs JSONL (with release_data) to SQL INSERTs.')
     parser.add_argument('input_file', help='Path to the .jsonl file')
     parser.add_argument('--output', '-o', default='discogs_inserts.sql',
                         help='Output SQL file (default: discogs_inserts.sql)')
@@ -187,16 +238,28 @@ def main():
         sys.exit(1)
 
     with open(args.output, 'w', encoding='utf-8') as outfile:
-        # Write header
+        # Write header with updated column names and release_type logic
         outfile.write("-- SQL INSERT statements generated by convert_discogs_jsonl_to_sql.py\n")
         outfile.write(f"-- Source file: {args.input_file}\n")
         outfile.write(f"-- Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         outfile.write(f"-- Database dialect: {args.db_type}\n")
-        outfile.write("-- Fields excluded from Album: date_added, date_changed, companies, genres, master_url, thumb, notes, uri\n")
+        outfile.write("-- Fields excluded from Album: date_added, date_changed\n")
         outfile.write("-- Images column: only primary image URI (string) is kept.\n")
         outfile.write("-- Labels column: only an array of label names (strings) is kept.\n")
         outfile.write("-- Videos column: 'description' field removed from each video.\n")
         outfile.write("-- Tracklist column: only track title and simplified extraartists (name, id) are kept.\n")
+        outfile.write("-- Genres column: array of genre strings (JSON).\n")
+        outfile.write("-- Companies column: array of company names (strings).\n")
+        outfile.write("-- coverartarchive_thumb column: MusicBrainz cover art thumbnail (from release_group.cover_image_small).\n")
+        outfile.write("-- wikipedia_url column: Wikipedia URL (from top-level wikipedia_url_search).\n")
+        outfile.write("-- release_format_description column: stores the top-level 'format_display' string (e.g., 'CD, Album').\n")
+        outfile.write("-- release_type column: derived from release_format_description with precedence:\n")
+        outfile.write("--   1. if contains 'single' or '7\"' → 'single'\n")
+        outfile.write("--   2. else if contains 'compilation' → 'compilation'\n")
+        outfile.write("--   3. else if contains 'promo' → 'promo'\n")
+        outfile.write("--   4. else if contains 'PAL' or 'NTSC' (case‑insensitive) and does NOT contain 'album' → 'video'\n")
+        outfile.write("--   5. else 'album'\n")
+        outfile.write("-- youtube_video_id_for_thumbnail column: stores the YouTube video ID of the first video (if any), otherwise NULL.\n")
         outfile.write("-- Discogs and YouTube base URLs have been stripped from all text fields.\n")
         outfile.write("-- extra_artists column now contains only artist name and discogs_id.\n")
         if replace_double_dash:
@@ -220,10 +283,10 @@ def main():
                 print(f"Warning: Line {line_number} is not valid JSON. Skipping.", file=sys.stderr)
                 continue
 
-            # Extract the Discogs data – it is nested under "DiscogsAPIcall"
-            discogs = full_obj.get('DiscogsAPIcall')
+            # Extract the Discogs release data – it is nested under "release_data"
+            discogs = full_obj.get('release_data')
             if discogs is None:
-                print(f"Warning: Line {line_number} has no 'DiscogsAPIcall' field. Skipping.", file=sys.stderr)
+                print(f"Warning: Line {line_number} has no 'release_data' field. Skipping.", file=sys.stderr)
                 continue
 
             # Extract the top-level artist (main artist)
@@ -243,83 +306,78 @@ def main():
                 print(f"Warning: Line {line_number} artist_id '{artist_id_str}' is not an integer. Skipping.", file=sys.stderr)
                 continue
 
-            # Determine if this is a master or a release
-            is_master = 'main_release' in discogs
+            # Extract top-level format_display (will become release_format_description)
+            format_display = full_obj.get('format_display')
 
-            # Initialize variables that may be set in only one branch
-            extra_artists = None
-            images_uri = None
-            labels_names_json = None
-            tracklist_simplified = None
-            videos_simplified = None
+            # Determine release_type based on format_display with enhanced logic
+            release_type_value = 'album'  # default
+            if format_display:
+                fd_lower = format_display.lower()
+                # 1. single or 7"
+                if 'single' in fd_lower or '7"' in format_display:
+                    release_type_value = 'single'
+                # 2. compilation
+                elif 'compilation' in fd_lower:
+                    release_type_value = 'compilation'
+                # 3. promo
+                elif 'promo' in fd_lower:
+                    release_type_value = 'promo'
+                # 4. video (PAL or NTSC without 'album')
+                elif ('pal' in fd_lower or 'ntsc' in fd_lower) and 'album' not in fd_lower:
+                    release_type_value = 'video'
+                # else remains 'album'
 
-            if is_master:
-                release_id = discogs.get('main_release')
-                master_id = discogs.get('id')
-                title = remove_url_base(discogs.get('title'))
-                year = discogs.get('year')
-                country = None
-                released = None
-                released_formatted = None
-                # notes and uri omitted
-                styles = to_json_string_and_strip_urls(discogs.get('styles'))
-                # extra_artists not present in masters, stays None
-                # Process labels (simplify to names)
-                raw_labels = discogs.get('labels')
-                if raw_labels:
-                    labels_names_json = simplify_labels(raw_labels)
-                # Simplify tracklist
-                raw_tracklist = discogs.get('tracklist')
-                if raw_tracklist:
-                    tracklist_simplified = simplify_tracklist(raw_tracklist)
-                    tracklist_simplified = to_json_string_and_strip_urls(tracklist_simplified)
-                # Simplify videos (remove description)
-                raw_videos = discogs.get('videos')
-                if raw_videos:
-                    videos_simplified = simplify_videos(raw_videos)
-                    videos_simplified = to_json_string_and_strip_urls(videos_simplified)
-                community = discogs.get('community')
-                rating_count = get_rating_count(community)
-                rating_average = get_rating_average(community)
-                # Process images – get primary image URI
-                raw_images = discogs.get('images')
-                if raw_images:
-                    images_uri = get_primary_image_uri(raw_images)
-            else:
-                release_id = discogs.get('id')
-                master_id = discogs.get('master_id') if 'master_id' in discogs else None
-                title = remove_url_base(discogs.get('title'))
-                year = discogs.get('year')
-                country = remove_url_base(discogs.get('country'))
-                released = remove_url_base(discogs.get('released'))
-                released_formatted = remove_url_base(discogs.get('released_formatted'))
-                # notes and uri omitted
-                styles = to_json_string_and_strip_urls(discogs.get('styles'))
-                # Simplify extraartists
-                extra_artists_raw = discogs.get('extraartists')
-                extra_artists_simplified = simplify_extra_artists(extra_artists_raw)
-                extra_artists = to_json_string_and_strip_urls(extra_artists_simplified) if extra_artists_simplified else None
-                # Process labels – simplify to names
-                raw_labels = discogs.get('labels')
-                if raw_labels:
-                    labels_names_json = simplify_labels(raw_labels)
-                # Simplify tracklist
-                raw_tracklist = discogs.get('tracklist')
-                if raw_tracklist:
-                    tracklist_simplified = simplify_tracklist(raw_tracklist)
-                    tracklist_simplified = to_json_string_and_strip_urls(tracklist_simplified)
-                # Simplify videos (remove description)
-                raw_videos = discogs.get('videos')
-                if raw_videos:
-                    videos_simplified = simplify_videos(raw_videos)
-                    videos_simplified = to_json_string_and_strip_urls(videos_simplified)
-                community = discogs.get('community')
-                rating_count = get_rating_count(community)
-                rating_average = get_rating_average(community)
-                # Process images – get primary image URI
-                raw_images = discogs.get('images')
-                if raw_images:
-                    images_uri = get_primary_image_uri(raw_images)
+            # Extract MusicBrainz data (optional)
+            musicbrainz = full_obj.get('MusicBrainzData')
+            # Extract Wikipedia URL (optional) – becomes wikipedia_url
+            wikipedia_url = full_obj.get('wikipedia_url_search')
+
+            # Extract fields from release_data
+            release_id = discogs.get('id')
+            master_id = discogs.get('master_id') if 'master_id' in discogs else None
+            title = remove_url_base(discogs.get('title'))
+            year = discogs.get('year')
+            # release_format_description will be set to format_display (not the Discogs country)
+            released = remove_url_base(discogs.get('released'))
+            released_formatted = remove_url_base(discogs.get('released_formatted'))
+            styles = to_json_string_and_strip_urls(discogs.get('styles'))
+            # Simplify extraartists
+            extra_artists_raw = discogs.get('extraartists')
+            extra_artists_simplified = simplify_extra_artists(extra_artists_raw)
+            extra_artists = to_json_string_and_strip_urls(extra_artists_simplified) if extra_artists_simplified else None
+            # Process labels – simplify to names
+            raw_labels = discogs.get('labels')
+            labels_names_json = simplify_labels(raw_labels) if raw_labels else None
+            # Simplify tracklist – get Python list first
+            raw_tracklist = discogs.get('tracklist')
+            tracklist_list = simplify_tracklist(raw_tracklist) if raw_tracklist else None
+            tracklist_simplified = to_json_string_and_strip_urls(tracklist_list) if tracklist_list else None
+            # Simplify videos – get Python list first (for video ID extraction)
+            raw_videos = discogs.get('videos')
+            videos_list = simplify_videos(raw_videos) if raw_videos else None
+            # Extract YouTube video ID from first video (if any) – becomes youtube_video_id_for_thumbnail
+            first_video_id = None
+            if videos_list and len(videos_list) > 0:
+                first_video_uri = videos_list[0].get('uri')
+                if first_video_uri:
+                    first_video_id = extract_youtube_video_id(first_video_uri)
+            # Now convert videos_list to JSON string for the videos column
+            videos_simplified = to_json_string_and_strip_urls(videos_list) if videos_list else None
+            community = discogs.get('community')
+            rating_count = get_rating_count(community)
+            rating_average = get_rating_average(community)
+            # Process images – get primary image URI
+            raw_images = discogs.get('images')
+            images_uri = get_primary_image_uri(raw_images) if raw_images else None
+            # Genres
+            raw_genres = discogs.get('genres')
+            genres_json = to_json_string_and_strip_urls(raw_genres) if raw_genres else None
+            # Companies – simplify to names
+            raw_companies = discogs.get('companies')
+            companies_names_json = simplify_companies(raw_companies) if raw_companies else None
+
+            # Get MusicBrainz thumb – becomes coverartarchive_thumb
+            thumb = get_musicbrainz_thumb(musicbrainz)
 
             # release_id must be present
             if release_id is None:
@@ -337,34 +395,48 @@ def main():
                 return escaped if escaped else None
 
             title_esc = esc(title)
-            country_esc = esc(country)
+            release_format_description_esc = esc(format_display)      # corresponds to release_format_description
+            release_type_esc = esc(release_type_value)                # corresponds to release_type
             released_esc = esc(released)
             released_formatted_esc = esc(released_formatted)
             styles_esc = esc(styles)
             extra_artists_esc = esc(extra_artists)
-            labels_esc = esc(labels_names_json)   # JSON string of label names
+            labels_esc = esc(labels_names_json)
             tracklist_esc = esc(tracklist_simplified)
             videos_esc = esc(videos_simplified)
-            images_esc = esc(images_uri)          # plain string URI
+            images_esc = esc(images_uri)
+            coverartarchive_thumb_esc = esc(thumb)                    # corresponds to coverartarchive_thumb
+            wikipedia_url_esc = esc(wikipedia_url)                    # corresponds to wikipedia_url
+            genres_esc = esc(genres_json)
+            companies_esc = esc(companies_names_json)
+            youtube_video_id_for_thumbnail_esc = esc(first_video_id)  # corresponds to youtube_video_id_for_thumbnail
 
-            # Build Album INSERT with album_id as first column (notes and uri removed)
+            # Build Album INSERT with updated column names
             album_sql = (
-                "INSERT INTO Album (album_id, release_id, title, year, country, released, released_formatted, "
-                "styles, master_id, extra_artists, labels, tracklist, videos, images, rating_count, rating_average) VALUES ("
+                "INSERT INTO Album (album_id, release_id, title, year, release_format_description, release_type, "
+                "released, released_formatted, styles, master_id, youtube_video_id_for_thumbnail, extra_artists, "
+                "labels, tracklist, videos, images, coverartarchive_thumb, wikipedia_url, genres, companies, "
+                "rating_count, rating_average) VALUES ("
                 f"{current_album_id}, "
                 f"{release_id}, "
                 f"{'NULL' if title_esc is None else f"'{title_esc}'"}, "
                 f"{year if year is not None else 'NULL'}, "
-                f"{'NULL' if country_esc is None else f"'{country_esc}'"}, "
+                f"{'NULL' if release_format_description_esc is None else f"'{release_format_description_esc}'"}, "
+                f"{'NULL' if release_type_esc is None else f"'{release_type_esc}'"}, "
                 f"{'NULL' if released_esc is None else f"'{released_esc}'"}, "
                 f"{'NULL' if released_formatted_esc is None else f"'{released_formatted_esc}'"}, "
                 f"{'NULL' if styles_esc is None else f"'{styles_esc}'"}, "
                 f"{master_id if master_id is not None else 'NULL'}, "
+                f"{'NULL' if youtube_video_id_for_thumbnail_esc is None else f"'{youtube_video_id_for_thumbnail_esc}'"}, "
                 f"{'NULL' if extra_artists_esc is None else f"'{extra_artists_esc}'"}, "
                 f"{'NULL' if labels_esc is None else f"'{labels_esc}'"}, "
                 f"{'NULL' if tracklist_esc is None else f"'{tracklist_esc}'"}, "
                 f"{'NULL' if videos_esc is None else f"'{videos_esc}'"}, "
                 f"{'NULL' if images_esc is None else f"'{images_esc}'"}, "
+                f"{'NULL' if coverartarchive_thumb_esc is None else f"'{coverartarchive_thumb_esc}'"}, "
+                f"{'NULL' if wikipedia_url_esc is None else f"'{wikipedia_url_esc}'"}, "
+                f"{'NULL' if genres_esc is None else f"'{genres_esc}'"}, "
+                f"{'NULL' if companies_esc is None else f"'{companies_esc}'"}, "
                 f"{rating_count if rating_count is not None else 'NULL'}, "
                 f"{rating_average if rating_average is not None else 'NULL'}"
                 ");"
