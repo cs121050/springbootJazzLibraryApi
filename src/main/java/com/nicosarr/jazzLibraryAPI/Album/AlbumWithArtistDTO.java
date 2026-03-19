@@ -14,23 +14,23 @@ public class AlbumWithArtistDTO extends AlbumDTO {
 
     public static AlbumWithArtistDTO fromEntity(Album album) {
         AlbumWithArtistDTO dto = new AlbumWithArtistDTO();
-        // copy fields from AlbumDTO (manually or via a helper)
+        // copy fields from AlbumDTO (using the updated getters)
         dto.setAlbum_id(album.getAlbum_id());
         dto.setRelease_id(album.getRelease_id());
         dto.setMaster_id(album.getMaster_id());
-        dto.setMaster_url(album.getMaster_url());
+        dto.setYoutubeVideoIdForThumbnail(album.getYoutubeVideoIdForThumbnail());
         dto.setRating_average(album.getRating_average());
         dto.setRating_count(album.getRating_count());
         dto.setYear(album.getYear());
-        dto.setCountry(album.getCountry());
+        dto.setReleaseFormatDescription(album.getReleaseFormatDescription());
         dto.setReleased(album.getReleased());
         dto.setReleased_formatted(album.getReleased_formatted());
-        dto.setNotes(album.getNotes());
+        dto.setReleaseType(album.getReleaseType());
         dto.setDate_added(album.getDate_added());
         dto.setDate_changed(album.getDate_changed());
         dto.setTitle(album.getTitle());
-        dto.setUri(album.getUri());
-        dto.setThumb(album.getThumb());
+        dto.setWikipediaUrl(album.getWikipediaUrl());
+        dto.setCoverartarchiveThumb(album.getCoverartarchiveThumb());
         dto.setCompanies(album.getCompanies());
         dto.setExtra_artists(album.getExtra_artists());
         dto.setGenres(album.getGenres());
