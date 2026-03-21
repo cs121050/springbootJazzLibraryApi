@@ -21,27 +21,11 @@ public class AlbumContainsArtistRep {
         return list.stream().map(AlbumContainsArtistDTO::fromEntity).collect(Collectors.toList());
     }
 
-    // Save a new association
-    public void save(AlbumContainsArtist aca) {
-        entityManager.persist(aca);
-    }
+    //TODO// Save a new association
 
-    // Find by composite key (Discogs IDs)
-    public AlbumContainsArtist findByDiscogsIds(int discogsArtistId, int discogsReleaseId) {
-        AlbumContainsArtistId id = new AlbumContainsArtistId(discogsArtistId, discogsReleaseId);
-        return entityManager.find(AlbumContainsArtist.class, id);
-    }
+    //TODO// Find by composite key (Discogs IDs)
 
-    // Delete by composite key
-    public void deleteByDiscogsIds(int discogsArtistId, int discogsReleaseId) {
-        AlbumContainsArtist aca = findByDiscogsIds(discogsArtistId, discogsReleaseId);
-        if (aca != null) {
-            entityManager.remove(aca);
-        }
-    }
+    //TODO// Delete by composite key
 
-    // Check existence
-    public boolean existsByDiscogsIds(int discogsArtistId, int discogsReleaseId) {
-        return findByDiscogsIds(discogsArtistId, discogsReleaseId) != null;
-    }
+    //TODO// Check existence
 }

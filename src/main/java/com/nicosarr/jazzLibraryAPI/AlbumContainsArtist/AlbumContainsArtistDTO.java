@@ -2,49 +2,50 @@ package com.nicosarr.jazzLibraryAPI.AlbumContainsArtist;
 
 public class AlbumContainsArtistDTO {
 
-    private int discogsArtistId;
-    private int discogsReleaseId;
+    private int artistId;
+    private int albumId;
     private boolean isMain;
 
     public AlbumContainsArtistDTO() {}
 
-    public AlbumContainsArtistDTO(int discogsArtistId, int discogsReleaseId, boolean isMain) {
-        this.discogsArtistId = discogsArtistId;
-        this.discogsReleaseId = discogsReleaseId;
+    public AlbumContainsArtistDTO(int artistId, int albumId, boolean isMain) {
+        this.artistId = artistId;
+        this.albumId = albumId;
         this.isMain = isMain;
     }
 
     // Factory method
     public static AlbumContainsArtistDTO fromEntity(AlbumContainsArtist entity) {
-        return new AlbumContainsArtistDTO(
-            entity.getDiscogsArtistId(),
-            entity.getDiscogsReleaseId(),
-            entity.isMain()
-        );
+    	AlbumContainsArtistDTO dto = new AlbumContainsArtistDTO(
+        		entity.getArtist().getArtist_id(), 
+        		entity.getAlbum().getAlbum_id(),
+        		entity.isMain()
+        		);
+        return dto;
     }
 
-    // Getters and setters
-    public int getDiscogsArtistId() {
-        return discogsArtistId;
-    }
+    // Getters and Setters
+	public int getArtistId() {
+		return artistId;
+	}
 
-    public void setDiscogsArtistId(int discogsArtistId) {
-        this.discogsArtistId = discogsArtistId;
-    }
+	public void setArtistId(int artistId) {
+		this.artistId = artistId;
+	}
 
-    public int getDiscogsReleaseId() {
-        return discogsReleaseId;
-    }
+	public int getAlbumId() {
+		return albumId;
+	}
 
-    public void setDiscogsReleaseId(int discogsReleaseId) {
-        this.discogsReleaseId = discogsReleaseId;
-    }
+	public void setAlbumId(int albumId) {
+		this.albumId = albumId;
+	}
 
-    public boolean isMain() {
-        return isMain;
-    }
+	public boolean isMain() {
+		return isMain;
+	}
 
-    public void setMain(boolean main) {
-        isMain = main;
-    }
+	public void setMain(boolean isMain) {
+		this.isMain = isMain;
+	}    
 }

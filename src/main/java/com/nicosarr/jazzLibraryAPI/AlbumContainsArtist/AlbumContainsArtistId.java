@@ -5,37 +5,22 @@ import jakarta.persistence.Embeddable;
 import java.io.Serializable;
 import java.util.Objects;
 
+import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistId;
+
 @Embeddable
 public class AlbumContainsArtistId implements Serializable {
 
-    @Column(name = "discogs_artist_id", nullable = false)
-    private int discogsArtistId;
+    @Column(name = "artist_id")
+    private int artistId;
 
-    @Column(name = "discogs_release_id", nullable = false)
-    private int discogsReleaseId;
+    @Column(name = "album_id")
+    private int albumId;
 
     public AlbumContainsArtistId() {}
 
-    public AlbumContainsArtistId(int discogsArtistId, int discogsReleaseId) {
-        this.discogsArtistId = discogsArtistId;
-        this.discogsReleaseId = discogsReleaseId;
-    }
-
-    // Getters and setters
-    public int getDiscogsArtistId() {
-        return discogsArtistId;
-    }
-
-    public void setDiscogsArtistId(int discogsArtistId) {
-        this.discogsArtistId = discogsArtistId;
-    }
-
-    public int getDiscogsReleaseId() {
-        return discogsReleaseId;
-    }
-
-    public void setDiscogsReleaseId(int discogsReleaseId) {
-        this.discogsReleaseId = discogsReleaseId;
+    public AlbumContainsArtistId(int artistId, int albumId) {
+        this.artistId = artistId;
+        this.albumId = albumId;
     }
 
     @Override
@@ -43,12 +28,27 @@ public class AlbumContainsArtistId implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         AlbumContainsArtistId that = (AlbumContainsArtistId) o;
-        return discogsArtistId == that.discogsArtistId &&
-               discogsReleaseId == that.discogsReleaseId;
+        return Objects.equals(artistId, that.artistId) && Objects.equals(albumId, that.albumId);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(discogsArtistId, discogsReleaseId);
+        return Objects.hash(artistId, albumId);
     }
+    
+	public int getArtistId() {
+		return artistId;
+	}
+
+	public void setArtistId(int artistId) {
+		this.artistId = artistId;
+	}
+
+	public int getAlbumId() {
+		return albumId;
+	}
+
+	public void setAlbumId(int albumId) {
+		this.albumId = albumId;
+	}
 }

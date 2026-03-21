@@ -67,7 +67,7 @@ public class VideoContainsArtist {
 	public void setVideo(Video video) {
 		this.video = video;
 	}
-    //
+    // Getters and setters for the transient fields
     public int getArtist_id() {
         return this.artist != null ? this.artist.getArtist_id() : 0;
     }
