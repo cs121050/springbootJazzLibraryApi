@@ -27,7 +27,7 @@ import jakarta.persistence.PersistenceContext;
 	
 	    // Method to get all artists with videos as DTOs
 	    public List<ArtistWithVideoDTO> retrieveAllWithVideos() {
-	        String jpql = "SELECT DISTINCT a FROM Artist a " +
+	        String jpql = "SELECT a FROM Artist a " +
 	                      "LEFT JOIN FETCH a.videoContainsArtists vca " +
 	                      "LEFT JOIN FETCH vca.video " +
 	                      "ORDER BY a.artist_id";
@@ -42,7 +42,7 @@ import jakarta.persistence.PersistenceContext;
 	    }
 	    
 	    public List<ArtistDTO> retrieveAll() {
-	        String jpql = "SELECT DISTINCT a FROM Artist a " +
+	        String jpql = "SELECT a FROM Artist a " +
 	                      "ORDER BY a.artist_id";
 	        
 	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);

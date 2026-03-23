@@ -63,6 +63,9 @@ public class Artist {
 
     @Column(name = "image_source_url", length = 1000)
     private String image_source_url;
+    
+    @Column(name = "wikipedia_data", columnDefinition = "TEXT")
+    private String wikipedia_data;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -87,7 +90,7 @@ public class Artist {
 
     public Artist(int artist_id, String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
-                  String thumbnail_url, String image_author, String image_license, String image_source_url) {
+                  String thumbnail_url, String image_author, String image_license, String image_source_url, String wikipedia_data) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -101,11 +104,12 @@ public class Artist {
         this.image_author = image_author;
         this.image_license = image_license;
         this.image_source_url = image_source_url;
+        this.wikipedia_data = wikipedia_data;
     }
 
     public Artist(String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
-                  String thumbnail_url, String image_author, String image_license, String image_source_url) {
+                  String thumbnail_url, String image_author, String image_license, String image_source_url, String wikipedia_data) {
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
         this.instrument_id = instrument_id;	   	
@@ -118,6 +122,7 @@ public class Artist {
         this.image_author = image_author;
         this.image_license = image_license;
         this.image_source_url = image_source_url;
+        this.wikipedia_data = wikipedia_data;
     }
 
     // Keep the simpler constructor for cases where you don't have image data
@@ -188,8 +193,11 @@ public class Artist {
 
     public String getImage_source_url() { return image_source_url; }
     public void setImage_source_url(String image_source_url) { this.image_source_url = image_source_url; }
+    
+    public String getWikipedia_data() { return wikipedia_data; }
+	public void setWikipedia_data(String wikipedia_data) { 	this.wikipedia_data = wikipedia_data; }
 
-    @Override
+	@Override
     public String toString() {
         return "Artist [artist_id=" + artist_id + ", discogs_id=" + discogs_id + ", artist_name=" + artist_name
                 + ", artist_surname=" + artist_surname + ", artist_rank=" + artist_rank + ", musicbrainz_uuid="
