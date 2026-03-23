@@ -18,6 +18,7 @@ public class ArtistWithVideoDTO {
     private String image_author;
     private String image_license;
     private String image_source_url;
+    private String wikipedia_data;
     private List<VideoWithArtistDTO> videos = new ArrayList<>();
 
     public ArtistWithVideoDTO() {}
@@ -26,7 +27,7 @@ public class ArtistWithVideoDTO {
                      Integer artist_rank, int instrument_id, String musicbrainz_uuid,
                      String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                      String thumbnail_url, String image_author, String image_license,
-                     String image_source_url) {
+                     String image_source_url, String wikipedia_data) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -40,6 +41,7 @@ public class ArtistWithVideoDTO {
         this.image_author = image_author;
         this.image_license = image_license;
         this.image_source_url = image_source_url;
+        this.wikipedia_data = wikipedia_data;
     }
 
     public static ArtistWithVideoDTO fromEntity(Artist artist) {
@@ -56,7 +58,8 @@ public class ArtistWithVideoDTO {
             artist.getThumbnail_url(),
             artist.getImage_author(),
             artist.getImage_license(),
-            artist.getImage_source_url()
+            artist.getImage_source_url(),
+            artist.getWikipedia_data()
         );
 
         if (artist.getVideoContainsArtists() != null) {
@@ -122,4 +125,14 @@ public class ArtistWithVideoDTO {
 
     public String getImage_source_url() { return image_source_url; }
     public void setImage_source_url(String image_source_url) { this.image_source_url = image_source_url; }
+
+	public String getWikipedia_data() {
+		return wikipedia_data;
+	}
+
+	public void setWikipedia_data(String wikipedia_data) {
+		this.wikipedia_data = wikipedia_data;
+	}
+    
+    
 }
