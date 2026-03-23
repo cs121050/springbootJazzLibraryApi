@@ -64,7 +64,8 @@ public class VideoWithArtistDTO {
                         vca.getArtist().getThumbnail_url(),
                         vca.getArtist().getImage_author(),
                         vca.getArtist().getImage_license(),
-                        vca.getArtist().getImage_source_url()
+                        vca.getArtist().getImage_source_url(),
+                        vca.getArtist().getWikipedia_data()
                     );
                     dto.getArtists().add(artistDTO);
                 }
