@@ -244,8 +244,8 @@ def fetch_artist_wikipedia_data(wikipedia_url: str, rate_limiter: RateLimiter, m
             return {"Intro": intro}
         return None
 
-    # Keywords to match – now includes "years" and also death/legacy/artistry
-    general_keywords = {"life", "career", "biography", "music", "years"}
+    # Keywords to match – now includes "years", "era", "period" and death/legacy/artistry
+    general_keywords = {"life", "career", "biography", "music", "years", "era", "period"}
     special_keywords = {"death", "legacy", "artistry"}
 
     matching_sections = []
@@ -261,6 +261,8 @@ def fetch_artist_wikipedia_data(wikipedia_url: str, rate_limiter: RateLimiter, m
         title = re.sub(r'<[^>]+>', '', title)
         # Decode HTML entities like &amp; → &
         title = html.unescape(title)
+        # Apply title case (capitalize first letter of each word)
+        title = title.title()
         return title.strip()
 
     # Temporary storage for all fetched content
