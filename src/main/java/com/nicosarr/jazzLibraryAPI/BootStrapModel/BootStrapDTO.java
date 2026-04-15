@@ -20,6 +20,7 @@ import com.nicosarr.jazzLibraryAPI.Duration.Duration;
 import com.nicosarr.jazzLibraryAPI.Duration.DurationDTO;
 import com.nicosarr.jazzLibraryAPI.Quote.Quote;
 import com.nicosarr.jazzLibraryAPI.Quote.QuoteDTO;
+import com.nicosarr.jazzLibraryAPI.Song.SongDTO;
 
 @JacksonXmlRootElement(localName = "bootStrapModel")
 public class BootStrapDTO {
@@ -33,12 +34,15 @@ public class BootStrapDTO {
 	private List<VideoContainsArtistDTO> videoContainsArtistList;
 	private List<AlbumDTO> albumList;
 	private List<AlbumContainsArtistDTO> albumContainsArtistList;
+	private List<SongDTO> songList;
 
 	
 	public BootStrapDTO() {
 	}
 	public BootStrapDTO(List<InstrumentDTO> instrumentList, List<TypeDTO> typeList, List<DurationDTO> durationList, List<ArtistDTO> artistList, List<QuoteDTO> quoteList,
-			List<VideoDTO> videoList, List<VideoContainsArtistDTO> videoContainsArtistList, List<AlbumDTO> albumList, List<AlbumContainsArtistDTO> albumContainsArtistList) {
+			List<VideoDTO> videoList, List<VideoContainsArtistDTO> videoContainsArtistList, 
+			List<AlbumDTO> albumList, List<AlbumContainsArtistDTO> albumContainsArtistList,
+			List<SongDTO> songList) {
 		this.instrumentList = instrumentList;
 		this.typeList = typeList;
 		this.durationList = durationList;
@@ -48,6 +52,7 @@ public class BootStrapDTO {
 		this.videoContainsArtistList = videoContainsArtistList;
 		this.albumList = albumList;
 		this.albumContainsArtistList = albumContainsArtistList;
+		this.songList = songList;
 	}
 	public List<InstrumentDTO> getInstrumentList() {
 		return instrumentList;
@@ -102,6 +107,12 @@ public class BootStrapDTO {
 	}
 	public void setAlbumContainsArtistList(List<AlbumContainsArtistDTO> albumContainsArtistList) {
 		this.albumContainsArtistList = albumContainsArtistList;
+	}
+	public List<SongDTO> getSongList() {
+		return songList;
+	}
+	public void setSongList(List<SongDTO> songList) {
+		this.songList = songList;
 	}
 	
 }
