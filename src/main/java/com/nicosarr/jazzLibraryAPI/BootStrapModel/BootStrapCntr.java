@@ -26,6 +26,8 @@ import com.nicosarr.jazzLibraryAPI.Instrument.InstrumentRep;
 import com.nicosarr.jazzLibraryAPI.Quote.Quote;
 import com.nicosarr.jazzLibraryAPI.Quote.QuoteDTO;
 import com.nicosarr.jazzLibraryAPI.Quote.QuoteRep;
+import com.nicosarr.jazzLibraryAPI.Song.SongDTO;
+import com.nicosarr.jazzLibraryAPI.Song.SongRep;
 import com.nicosarr.jazzLibraryAPI.Type.Type;
 import com.nicosarr.jazzLibraryAPI.Type.TypeDTO;
 import com.nicosarr.jazzLibraryAPI.Type.TypeRep;
@@ -68,6 +70,9 @@ public class BootStrapCntr {
     @Autowired
     private AlbumContainsArtistRep albumContainsArtistRepository;
     
+    @Autowired
+    private SongRep songRepository;
+    
 	
 	@GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public BootStrapDTO getAllData() {
@@ -81,6 +86,7 @@ public class BootStrapCntr {
         List<VideoContainsArtistDTO> videoContainsArtistDTOs = videoContainsArtistRepository.retrieveAll();
         List<AlbumDTO> albumDTOs = albumRepository.retrieveAll();
         List<AlbumContainsArtistDTO> albumContainsArtistDTOs = albumContainsArtistRepository.retrieveAll();
+        List<SongDTO> songDTOs = songRepository.retrieveAll();
         
         // Create and return bootstrap DTO
         return new BootStrapDTO(
@@ -92,7 +98,8 @@ public class BootStrapCntr {
             videoDTOs,
             videoContainsArtistDTOs,
             albumDTOs,
-            albumContainsArtistDTOs
+            albumContainsArtistDTOs,
+            songDTOs
         );
     }
 	

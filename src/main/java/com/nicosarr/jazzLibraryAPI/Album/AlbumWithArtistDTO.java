@@ -39,6 +39,7 @@ public class AlbumWithArtistDTO extends AlbumDTO {
         dto.setStyles(album.getStyles());
         dto.setTracklist(album.getTracklist());
         dto.setVideos(album.getVideos());
+        dto.setWikipedia_data(album.getWikipedia_data());
 
         // fill artists from the junction table
         if (album.getAlbumContainsArtists() != null) {

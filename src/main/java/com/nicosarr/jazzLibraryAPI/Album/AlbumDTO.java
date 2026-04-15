@@ -28,6 +28,7 @@ public class AlbumDTO {
     private String styles;
     private String tracklist;
     private String videos;
+    private String wikipedia_data;
 
     public AlbumDTO() {}
     
@@ -36,7 +37,7 @@ public class AlbumDTO {
                     String released, String released_formatted, String releaseType, String date_added,
                     String date_changed, String title, String wikipediaUrl, String coverartarchiveThumb,
                     String companies, String extra_artists, String genres, String images, String labels,
-                    String styles, String tracklist, String videos) {
+                    String styles, String tracklist, String videos, String wikipedia_data) {
         this.album_id = album_id;
         this.release_id = release_id;
         this.master_id = master_id;
@@ -61,6 +62,7 @@ public class AlbumDTO {
         this.styles = styles;
         this.tracklist = tracklist;
         this.videos = videos;
+        this.wikipedia_data = wikipedia_data;
     }
 
     // Factory method to convert from entity
@@ -90,6 +92,7 @@ public class AlbumDTO {
         dto.setStyles(album.getStyles());
         dto.setTracklist(album.getTracklist());
         dto.setVideos(album.getVideos());
+        dto.setWikipedia_data(album.getWikipedia_data());
         return dto;
     }
 
@@ -165,4 +168,14 @@ public class AlbumDTO {
 
     public String getVideos() { return videos; }
     public void setVideos(String videos) { this.videos = videos; }
+
+	public String getWikipedia_data() {
+		return wikipedia_data;
+	}
+
+	public void setWikipedia_data(String wikipedia_data) {
+		this.wikipedia_data = wikipedia_data;
+	}
+    
+    
 }
