@@ -30,6 +30,7 @@ public class SongDTO {
         return dto;
     }
 
+    
     // Getters and Setters (snake_case names)
     public int getSong_id() { return song_id; }
     public void setSong_id(int song_id) { this.song_id = song_id; }
