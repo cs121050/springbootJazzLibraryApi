@@ -15,7 +15,7 @@ public class AlbumRep {
 
     // Retrieve all albums without artists
     public List<AlbumDTO> retrieveAll() {
-        String jpql = "SELECT a FROM Album a Where a.releaseType like 'album' ORDER BY a.album_id";
+        String jpql = "SELECT a FROM Album a ORDER BY a.album_id";
         TypedQuery<Album> query = entityManager.createQuery(jpql, Album.class);
         List<Album> albums = query.getResultList();
         return albums.stream().map(AlbumDTO::fromEntity).collect(Collectors.toList());
