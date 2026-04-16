@@ -2,110 +2,56 @@ package com.nicosarr.jazzLibraryAPI.Song;
 
 public class SongDTO {
 
-    private int songId;
-    private int mainArtistId;          // required FK (matches DB not null)
-    private String relatedArtists;
-    private Integer albumId;           // optional FK (can be null)
-    private String songTitle;
+    private int song_id;
+    private int main_artist_id;          // required FK
+    private String related_artists;
+    private Integer album_id;            // optional FK
+    private String song_title;
     private String duration;
-    private String ytVideoId;
+    private String yt_videoid;
     private String video_availability;
 
     public SongDTO() {}
 
-    // Optional: constructor for convenience
-    public SongDTO(int songId, int mainArtistId, String relatedArtists, Integer albumId,
-                   String songTitle, String duration, String ytVideoId, String video_availability) {
-        this.songId = songId;
-        this.mainArtistId = mainArtistId;
-        this.relatedArtists = relatedArtists;
-        this.albumId = albumId;
-        this.songTitle = songTitle;
-        this.duration = duration;
-        this.ytVideoId = ytVideoId;
-        this.video_availability = video_availability;
-    }
-
-    // Factory method from entity – now only sets IDs, no names
+    // Factory method from entity – now sets snake_case fields
     public static SongDTO fromEntity(Song song) {
         SongDTO dto = new SongDTO();
-        dto.setSongId(song.getSongId());
-        // mainArtistId is required – safe to call getMainArtist().getArtist_id()
-        dto.setMainArtistId(song.getMainArtist().getArtist_id());
-        dto.setRelatedArtists(song.getRelatedArtists());
-        // albumId may be null
+        dto.setSong_id(song.getSongId());
+        // mainArtist is required, fetched eagerly
+        dto.setMain_artist_id(song.getMainArtist().getArtist_id());
+        dto.setRelated_artists(song.getRelatedArtists());
         if (song.getAlbum() != null) {
-            dto.setAlbumId(song.getAlbum().getAlbum_id());
+            dto.setAlbum_id(song.getAlbum().getAlbum_id());
         }
-        dto.setSongTitle(song.getSongTitle());
+        dto.setSong_title(song.getSongTitle());
         dto.setDuration(song.getDuration());
-        dto.setYtVideoId(song.getYtVideoId());
+        dto.setYt_videoid(song.getYtVideoId());
         dto.setVideo_availability(song.getVideo_availability());
         return dto;
     }
 
-    // Getters and setters
-    public int getSongId() {
-        return songId;
-    }
+    // Getters and Setters (snake_case names)
+    public int getSong_id() { return song_id; }
+    public void setSong_id(int song_id) { this.song_id = song_id; }
 
-    public void setSongId(int songId) {
-        this.songId = songId;
-    }
+    public int getMain_artist_id() { return main_artist_id; }
+    public void setMain_artist_id(int main_artist_id) { this.main_artist_id = main_artist_id; }
 
-    public int getMainArtistId() {
-        return mainArtistId;
-    }
+    public String getRelated_artists() { return related_artists; }
+    public void setRelated_artists(String related_artists) { this.related_artists = related_artists; }
 
-    public void setMainArtistId(int mainArtistId) {
-        this.mainArtistId = mainArtistId;
-    }
+    public Integer getAlbum_id() { return album_id; }
+    public void setAlbum_id(Integer album_id) { this.album_id = album_id; }
 
-    public String getRelatedArtists() {
-        return relatedArtists;
-    }
+    public String getSong_title() { return song_title; }
+    public void setSong_title(String song_title) { this.song_title = song_title; }
 
-    public void setRelatedArtists(String relatedArtists) {
-        this.relatedArtists = relatedArtists;
-    }
+    public String getDuration() { return duration; }
+    public void setDuration(String duration) { this.duration = duration; }
 
-    public Integer getAlbumId() {
-        return albumId;
-    }
+    public String getYt_videoid() { return yt_videoid; }
+    public void setYt_videoid(String yt_videoid) { this.yt_videoid = yt_videoid; }
 
-    public void setAlbumId(Integer albumId) {
-        this.albumId = albumId;
-    }
-
-    public String getSongTitle() {
-        return songTitle;
-    }
-
-    public void setSongTitle(String songTitle) {
-        this.songTitle = songTitle;
-    }
-
-    public String getDuration() {
-        return duration;
-    }
-
-    public void setDuration(String duration) {
-        this.duration = duration;
-    }
-
-    public String getYtVideoId() {
-        return ytVideoId;
-    }
-
-    public void setYtVideoId(String ytVideoId) {
-        this.ytVideoId = ytVideoId;
-    }
-
-    public String getVideo_availability() {
-        return video_availability;
-    }
-
-    public void setVideo_availability(String video_availability) {
-        this.video_availability = video_availability;
-    }
+    public String getVideo_availability() { return video_availability; }
+    public void setVideo_availability(String video_availability) { this.video_availability = video_availability; }
 }

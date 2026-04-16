@@ -35,7 +35,7 @@ public class AlbumContainsArtistId implements Serializable {
     public int hashCode() {
         return Objects.hash(artistId, albumId);
     }
-    
+
 	public int getArtistId() {
 		return artistId;
 	}
@@ -51,4 +51,5 @@ public class AlbumContainsArtistId implements Serializable {
 	public void setAlbumId(int albumId) {
 		this.albumId = albumId;
 	}
+    
 }
