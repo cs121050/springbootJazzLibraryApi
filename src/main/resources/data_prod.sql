@@ -7190,8 +7190,6 @@
 	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) VALUES (49, 90, 0);
 	INSERT INTO AlbumContainsArtist (artist_id, album_id, is_main) VALUES (18, 90, 0);
 
-	
-	
 	--songs
 	INSERT INTO song (song_id, main_artist_id, related_artists, album_id, song_title, duration, yt_videoid, video_availability) VALUES (1, 1, NULL, 1, 'Fuchsia Swing Song', '6:04', 'ytnZEis9_Z4', '1');
 	INSERT INTO song (song_id, main_artist_id, related_artists, album_id, song_title, duration, yt_videoid, video_availability) VALUES (2, 1, NULL, 1, 'Downstairs Blues Upstairs', '5:33', 'pf_TzyBOzaQ', '1');
