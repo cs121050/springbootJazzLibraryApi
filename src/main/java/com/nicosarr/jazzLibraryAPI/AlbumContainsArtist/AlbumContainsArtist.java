@@ -66,16 +66,19 @@ public class AlbumContainsArtist {
 	public void setAlbum(Album album) {
 		this.album = album;
 	}
-	
 
-	public int isMain() {
+	public int getIsMain() {
 		return isMain;
 	}
 
-	public void setMain(int isMain) {
+	public void setIsMain(int isMain) {
 		this.isMain = isMain;
-	}    
-	
+	}
+
+	public void setAlbum_id(int album_id) {
+		this.album_id = album_id;
+	}
+
 	// Getters and setters for the transient fields
     public int getArtist_id() {
         return this.artist != null ? this.artist.getArtist_id() : 0;

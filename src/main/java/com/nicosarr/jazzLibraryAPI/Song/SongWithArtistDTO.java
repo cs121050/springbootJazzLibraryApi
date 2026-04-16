@@ -4,46 +4,42 @@ import com.nicosarr.jazzLibraryAPI.Artist.ArtistDTO;
 
 public class SongWithArtistDTO extends SongDTO {
 
-    private ArtistDTO mainArtist;
+    private ArtistDTO mainArtist;   // full artist details
 
-    public SongWithArtistDTO() { super(); }
+    public SongWithArtistDTO() {
+        super();
+    }
 
     public static SongWithArtistDTO fromEntity(Song song) {
         SongWithArtistDTO dto = new SongWithArtistDTO();
-        // Copy base fields
+        
+        // Set base fields from parent SongDTO
         dto.setSongId(song.getSongId());
+        dto.setMainArtistId(song.getMainArtist().getArtist_id());   // required
         dto.setRelatedArtists(song.getRelatedArtists());
         if (song.getAlbum() != null) {
             dto.setAlbumId(song.getAlbum().getAlbum_id());
-            dto.setAlbumTitle(song.getAlbum().getTitle());
         }
         dto.setSongTitle(song.getSongTitle());
         dto.setDuration(song.getDuration());
         dto.setYtVideoId(song.getYtVideoId());
+        dto.setVideo_availability(song.getVideo_availability());
 
-        // Convert main artist
+        // Add full artist object
         if (song.getMainArtist() != null) {
-            ArtistDTO artistDTO = new ArtistDTO(
-                song.getMainArtist().getArtist_id(),
-                song.getMainArtist().getArtist_name(),
-                song.getMainArtist().getArtist_surname(),
-                song.getMainArtist().getArtist_rank(),
-                song.getMainArtist().getInstrument_id(),
-                song.getMainArtist().getMusicbrainz_uuid(),
-                song.getMainArtist().getSpotify_playlist_id(),
-                song.getMainArtist().getDiscogs_id(),
-                song.getMainArtist().getWikipedia_url(),
-                song.getMainArtist().getThumbnail_url(),
-                song.getMainArtist().getImage_author(),
-                song.getMainArtist().getImage_license(),
-                song.getMainArtist().getImage_source_url(),
-                song.getMainArtist().getWikipedia_data()
-            );
+            ArtistDTO artistDTO = ArtistDTO.fromEntity(song.getMainArtist());
             dto.setMainArtist(artistDTO);
         }
+        
         return dto;
     }
 
-    public ArtistDTO getMainArtist() { return mainArtist; }
-    public void setMainArtist(ArtistDTO mainArtist) { this.mainArtist = mainArtist; }
+    // Getter and setter for the nested artist
+    public ArtistDTO getMainArtist() {
+        return mainArtist;
+    }
+
+    public void setMainArtist(ArtistDTO mainArtist) {
+        this.mainArtist = mainArtist;
+    }
 }
