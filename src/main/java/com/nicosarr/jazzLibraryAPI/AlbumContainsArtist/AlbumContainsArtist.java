@@ -33,51 +33,65 @@ public class AlbumContainsArtist {
 
     
     @Column(name = "is_main", nullable = false)
-    private int isMain;
+    private int is_main;
 
     public AlbumContainsArtist() {}
 
-    public AlbumContainsArtist(int artist_id, int album_id, int isMain) {
-		this.artist_id = artist_id;
-		this.album_id = album_id;
-		this.isMain = isMain;
-	}
+    
 
 	public AlbumContainsArtistId getId() {
 		return id;
 	}
 
+
+
 	public void setId(AlbumContainsArtistId id) {
 		this.id = id;
 	}
+
+
 
 	public Artist getArtist() {
 		return artist;
 	}
 
+
+
 	public void setArtist(Artist artist) {
 		this.artist = artist;
 	}
+
+
 
 	public Album getAlbum() {
 		return album;
 	}
 
+
+
 	public void setAlbum(Album album) {
 		this.album = album;
 	}
 
-	public int getIsMain() {
-		return isMain;
+
+
+	public int getIs_main() {
+		return is_main;
 	}
 
-	public void setIsMain(int isMain) {
-		this.isMain = isMain;
+
+
+	public void setIs_main(int is_main) {
+		this.is_main = is_main;
 	}
+
+
 
 	public void setAlbum_id(int album_id) {
 		this.album_id = album_id;
 	}
+
+
 
 	// Getters and setters for the transient fields
     public int getArtist_id() {

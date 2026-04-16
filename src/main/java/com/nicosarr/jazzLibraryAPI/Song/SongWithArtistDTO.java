@@ -4,42 +4,29 @@ import com.nicosarr.jazzLibraryAPI.Artist.ArtistDTO;
 
 public class SongWithArtistDTO extends SongDTO {
 
-    private ArtistDTO mainArtist;   // full artist details
-
-    public SongWithArtistDTO() {
-        super();
-    }
+    private ArtistDTO main_artist;   // full artist details, snake_case field
 
     public static SongWithArtistDTO fromEntity(Song song) {
         SongWithArtistDTO dto = new SongWithArtistDTO();
-        
-        // Set base fields from parent SongDTO
-        dto.setSongId(song.getSongId());
-        dto.setMainArtistId(song.getMainArtist().getArtist_id());   // required
-        dto.setRelatedArtists(song.getRelatedArtists());
+        // Copy base fields (using snake_case setters)
+        dto.setSong_id(song.getSongId());
+        dto.setMain_artist_id(song.getMainArtist().getArtist_id());
+        dto.setRelated_artists(song.getRelatedArtists());
         if (song.getAlbum() != null) {
-            dto.setAlbumId(song.getAlbum().getAlbum_id());
+            dto.setAlbum_id(song.getAlbum().getAlbum_id());
         }
-        dto.setSongTitle(song.getSongTitle());
+        dto.setSong_title(song.getSongTitle());
         dto.setDuration(song.getDuration());
-        dto.setYtVideoId(song.getYtVideoId());
+        dto.setYt_videoid(song.getYtVideoId());
         dto.setVideo_availability(song.getVideo_availability());
 
-        // Add full artist object
+        // Add full artist object (ensure ArtistDTO also uses snake_case if needed)
         if (song.getMainArtist() != null) {
-            ArtistDTO artistDTO = ArtistDTO.fromEntity(song.getMainArtist());
-            dto.setMainArtist(artistDTO);
+            dto.setMain_artist(ArtistDTO.fromEntity(song.getMainArtist()));
         }
-        
         return dto;
     }
 
-    // Getter and setter for the nested artist
-    public ArtistDTO getMainArtist() {
-        return mainArtist;
-    }
-
-    public void setMainArtist(ArtistDTO mainArtist) {
-        this.mainArtist = mainArtist;
-    }
+    public ArtistDTO getMain_artist() { return main_artist; }
+    public void setMain_artist(ArtistDTO main_artist) { this.main_artist = main_artist; }
 }
