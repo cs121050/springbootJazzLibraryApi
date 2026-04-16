@@ -4,11 +4,11 @@ public class AlbumContainsArtistDTO {
 
     private int artistId;
     private int albumId;
-    private boolean isMain;
+    private int isMain;
 
     public AlbumContainsArtistDTO() {}
 
-    public AlbumContainsArtistDTO(int artistId, int albumId, boolean isMain) {
+    public AlbumContainsArtistDTO(int artistId, int albumId, int isMain) {
         this.artistId = artistId;
         this.albumId = albumId;
         this.isMain = isMain;
@@ -41,11 +41,11 @@ public class AlbumContainsArtistDTO {
 		this.albumId = albumId;
 	}
 
-	public boolean isMain() {
+	public int isMain() {
 		return isMain;
 	}
 
-	public void setMain(boolean isMain) {
+	public void setMain(int isMain) {
 		this.isMain = isMain;
 	}    
 }
