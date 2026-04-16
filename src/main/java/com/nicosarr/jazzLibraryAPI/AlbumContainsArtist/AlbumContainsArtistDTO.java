@@ -19,7 +19,7 @@ public class AlbumContainsArtistDTO {
     	AlbumContainsArtistDTO dto = new AlbumContainsArtistDTO(
         		entity.getArtist().getArtist_id(), 
         		entity.getAlbum().getAlbum_id(),
-        		entity.isMain()
+        		entity.getIsMain()
         		);
         return dto;
     }
@@ -41,11 +41,13 @@ public class AlbumContainsArtistDTO {
 		this.albumId = albumId;
 	}
 
-	public int isMain() {
+	public int getIsMain() {
 		return isMain;
 	}
 
-	public void setMain(int isMain) {
+	public void setIsMain(int isMain) {
 		this.isMain = isMain;
-	}    
+	}
+
+ 
 }
