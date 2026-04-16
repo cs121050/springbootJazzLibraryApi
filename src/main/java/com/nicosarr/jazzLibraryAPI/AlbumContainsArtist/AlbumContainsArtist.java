@@ -33,11 +33,11 @@ public class AlbumContainsArtist {
 
     
     @Column(name = "is_main", nullable = false)
-    private boolean isMain;
+    private int isMain;
 
     public AlbumContainsArtist() {}
 
-    public AlbumContainsArtist(int artist_id, int album_id, boolean isMain) {
+    public AlbumContainsArtist(int artist_id, int album_id, int isMain) {
 		this.artist_id = artist_id;
 		this.album_id = album_id;
 		this.isMain = isMain;
@@ -68,11 +68,11 @@ public class AlbumContainsArtist {
 	}
 	
 
-	public boolean isMain() {
+	public int isMain() {
 		return isMain;
 	}
 
-	public void setMain(boolean isMain) {
+	public void setMain(int isMain) {
 		this.isMain = isMain;
 	}    
 	
