@@ -21,7 +21,7 @@ public class Album {
 	private Integer master_id; // Discogs master ID (if any)
 
 	@Column(name = "youtube_video_id_for_thumbnail")
-	private String youtubeVideoIdForThumbnail;
+	private String youtube_video_id_for_thumbnail;
 
 	private Double rating_average; // from community.rating.average
 	private Integer rating_count; // from community.rating.count
@@ -29,13 +29,13 @@ public class Album {
 	private Integer year; // release year
 
 	@Column(name = "release_format_description")
-	private String releaseFormatDescription;
+	private String release_format_description;
 
 	private String released; // raw release date string
 	private String released_formatted;
 
 	@Column(name = "release_type")
-	private String releaseType; // derived from format_display
+	private String release_type; // derived from format_display
 
 	private String date_added;
 	private String date_changed;
@@ -43,10 +43,10 @@ public class Album {
 	private String title;
 
 	@Column(name = "wikipedia_url")
-	private String wikipediaUrl;
+	private String wikipedia_url;
 
 	@Column(name = "coverartarchive_thumb")
-	private String coverartarchiveThumb;
+	private String coverartarchive_thumb;
 
 	// JSON fields stored as TEXT
 	@Column(columnDefinition = "TEXT")
@@ -88,28 +88,28 @@ public class Album {
 	public Album() {
 	}
 
-	public Album(int album_id, int release_id, Integer master_id, String youtubeVideoIdForThumbnail,
-			Double rating_average, Integer rating_count, Integer year, String releaseFormatDescription, String released,
-			String released_formatted, String releaseType, String date_added, String date_changed, String title,
-			String wikipediaUrl, String coverartarchiveThumb, String companies, String extra_artists, String genres,
+	public Album(int album_id, int release_id, Integer master_id, String youtube_video_id_for_thumbnail,
+			Double rating_average, Integer rating_count, Integer year, String release_format_description, String released,
+			String released_formatted, String release_type, String date_added, String date_changed, String title,
+			String wikipedia_url, String coverartarchive_thumb, String companies, String extra_artists, String genres,
 			String images, String labels, String styles, String tracklist, String videos,
 			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data) {
 		this.album_id = album_id;
 		this.release_id = release_id;
 		this.master_id = master_id;
-		this.youtubeVideoIdForThumbnail = youtubeVideoIdForThumbnail;
+		this.youtube_video_id_for_thumbnail = youtube_video_id_for_thumbnail;
 		this.rating_average = rating_average;
 		this.rating_count = rating_count;
 		this.year = year;
-		this.releaseFormatDescription = releaseFormatDescription;
+		this.release_format_description = release_format_description;
 		this.released = released;
 		this.released_formatted = released_formatted;
-		this.releaseType = releaseType;
+		this.release_type = release_type;
 		this.date_added = date_added;
 		this.date_changed = date_changed;
 		this.title = title;
-		this.wikipediaUrl = wikipediaUrl;
-		this.coverartarchiveThumb = coverartarchiveThumb;
+		this.wikipedia_url = wikipedia_url;
+		this.coverartarchive_thumb = coverartarchive_thumb;
 		this.companies = companies;
 		this.extra_artists = extra_artists;
 		this.genres = genres;
@@ -147,12 +147,12 @@ public class Album {
 		this.master_id = master_id;
 	}
 
-	public String getYoutubeVideoIdForThumbnail() {
-		return youtubeVideoIdForThumbnail;
+	public String getYoutube_video_id_for_thumbnail() {
+		return youtube_video_id_for_thumbnail;
 	}
 
-	public void setYoutubeVideoIdForThumbnail(String youtubeVideoIdForThumbnail) {
-		this.youtubeVideoIdForThumbnail = youtubeVideoIdForThumbnail;
+	public void setYoutube_video_id_for_thumbnail(String youtube_video_id_for_thumbnail) {
+		this.youtube_video_id_for_thumbnail = youtube_video_id_for_thumbnail;
 	}
 
 	public Double getRating_average() {
@@ -179,12 +179,12 @@ public class Album {
 		this.year = year;
 	}
 
-	public String getReleaseFormatDescription() {
-		return releaseFormatDescription;
+	public String getRelease_format_description() {
+		return release_format_description;
 	}
 
-	public void setReleaseFormatDescription(String releaseFormatDescription) {
-		this.releaseFormatDescription = releaseFormatDescription;
+	public void setRelease_format_description(String release_format_description) {
+		this.release_format_description = release_format_description;
 	}
 
 	public String getReleased() {
@@ -203,12 +203,12 @@ public class Album {
 		this.released_formatted = released_formatted;
 	}
 
-	public String getReleaseType() {
-		return releaseType;
+	public String getRelease_type() {
+		return release_type;
 	}
 
-	public void setReleaseType(String releaseType) {
-		this.releaseType = releaseType;
+	public void setRelease_type(String release_type) {
+		this.release_type = release_type;
 	}
 
 	public String getDate_added() {
@@ -235,20 +235,20 @@ public class Album {
 		this.title = title;
 	}
 
-	public String getWikipediaUrl() {
-		return wikipediaUrl;
+	public String getWikipedia_url() {
+		return wikipedia_url;
 	}
 
-	public void setWikipediaUrl(String wikipediaUrl) {
-		this.wikipediaUrl = wikipediaUrl;
+	public void setWikipedia_url(String wikipedia_url) {
+		this.wikipedia_url = wikipedia_url;
 	}
 
-	public String getCoverartarchiveThumb() {
-		return coverartarchiveThumb;
+	public String getCoverartarchive_thumb() {
+		return coverartarchive_thumb;
 	}
 
-	public void setCoverartarchiveThumb(String coverartarchiveThumb) {
-		this.coverartarchiveThumb = coverartarchiveThumb;
+	public void setCoverartarchive_thumb(String coverartarchive_thumb) {
+		this.coverartarchive_thumb = coverartarchive_thumb;
 	}
 
 	public String getCompanies() {
