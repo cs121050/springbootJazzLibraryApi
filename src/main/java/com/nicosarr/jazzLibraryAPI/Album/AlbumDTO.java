@@ -5,19 +5,19 @@ public class AlbumDTO {
     private int album_id;
     private int release_id;
     private Integer master_id;
-    private String youtubeVideoIdForThumbnail;
+    private String youtube_video_id_for_thumbnail;
     private Double rating_average;
     private Integer rating_count;
     private Integer year;
-    private String releaseFormatDescription;
+    private String release_format_description;
     private String released;
     private String released_formatted;
-    private String releaseType;
+    private String release_type;
     private String date_added;
     private String date_changed;
     private String title;
-    private String wikipediaUrl;
-    private String coverartarchiveThumb;
+    private String wikipedia_url;
+    private String coverartarchive_thumb;
 
     // JSON fields (as raw strings – you can parse them later)
     private String companies;
@@ -32,28 +32,28 @@ public class AlbumDTO {
 
     public AlbumDTO() {}
     
-    public AlbumDTO(int album_id, int release_id, Integer master_id, String youtubeVideoIdForThumbnail,
-                    Double rating_average, Integer rating_count, Integer year, String releaseFormatDescription,
-                    String released, String released_formatted, String releaseType, String date_added,
-                    String date_changed, String title, String wikipediaUrl, String coverartarchiveThumb,
+    public AlbumDTO(int album_id, int release_id, Integer master_id, String youtube_video_id_for_thumbnail,
+                    Double rating_average, Integer rating_count, Integer year, String release_format_description,
+                    String released, String released_formatted, String release_type, String date_added,
+                    String date_changed, String title, String wikipedia_url, String coverartarchive_thumb,
                     String companies, String extra_artists, String genres, String images, String labels,
                     String styles, String tracklist, String videos, String wikipedia_data) {
         this.album_id = album_id;
         this.release_id = release_id;
         this.master_id = master_id;
-        this.youtubeVideoIdForThumbnail = youtubeVideoIdForThumbnail;
+        this.youtube_video_id_for_thumbnail = youtube_video_id_for_thumbnail;
         this.rating_average = rating_average;
         this.rating_count = rating_count;
         this.year = year;
-        this.releaseFormatDescription = releaseFormatDescription;
+        this.release_format_description = release_format_description;
         this.released = released;
         this.released_formatted = released_formatted;
-        this.releaseType = releaseType;
+        this.release_type = release_type;
         this.date_added = date_added;
         this.date_changed = date_changed;
         this.title = title;
-        this.wikipediaUrl = wikipediaUrl;
-        this.coverartarchiveThumb = coverartarchiveThumb;
+        this.wikipedia_url = wikipedia_url;
+        this.coverartarchive_thumb = coverartarchive_thumb;
         this.companies = companies;
         this.extra_artists = extra_artists;
         this.genres = genres;
@@ -71,19 +71,19 @@ public class AlbumDTO {
         dto.setAlbum_id(album.getAlbum_id());
         dto.setRelease_id(album.getRelease_id());
         dto.setMaster_id(album.getMaster_id());
-        dto.setYoutubeVideoIdForThumbnail(album.getYoutubeVideoIdForThumbnail());
+        dto.setYoutube_video_id_for_thumbnail(album.getYoutube_video_id_for_thumbnail());
         dto.setRating_average(album.getRating_average());
         dto.setRating_count(album.getRating_count());
         dto.setYear(album.getYear());
-        dto.setReleaseFormatDescription(album.getReleaseFormatDescription());
+        dto.setRelease_format_description(album.getRelease_format_description());
         dto.setReleased(album.getReleased());
         dto.setReleased_formatted(album.getReleased_formatted());
-        dto.setReleaseType(album.getReleaseType());
+        dto.setRelease_type(album.getRelease_type());
         dto.setDate_added(album.getDate_added());
         dto.setDate_changed(album.getDate_changed());
         dto.setTitle(album.getTitle());
-        dto.setWikipediaUrl(album.getWikipediaUrl());
-        dto.setCoverartarchiveThumb(album.getCoverartarchiveThumb());
+        dto.setWikipedia_url(album.getWikipedia_url());
+        dto.setCoverartarchive_thumb(album.getCoverartarchive_thumb());
         dto.setCompanies(album.getCompanies());
         dto.setExtra_artists(album.getExtra_artists());
         dto.setGenres(album.getGenres());
@@ -106,8 +106,8 @@ public class AlbumDTO {
     public Integer getMaster_id() { return master_id; }
     public void setMaster_id(Integer master_id) { this.master_id = master_id; }
 
-    public String getYoutubeVideoIdForThumbnail() { return youtubeVideoIdForThumbnail; }
-    public void setYoutubeVideoIdForThumbnail(String youtubeVideoIdForThumbnail) { this.youtubeVideoIdForThumbnail = youtubeVideoIdForThumbnail; }
+    public String getYoutube_video_id_for_thumbnail() { return youtube_video_id_for_thumbnail; }
+    public void setYoutube_video_id_for_thumbnail(String youtube_video_id_for_thumbnail) { this.youtube_video_id_for_thumbnail = youtube_video_id_for_thumbnail; }
 
     public Double getRating_average() { return rating_average; }
     public void setRating_average(Double rating_average) { this.rating_average = rating_average; }
@@ -118,8 +118,8 @@ public class AlbumDTO {
     public Integer getYear() { return year; }
     public void setYear(Integer year) { this.year = year; }
 
-    public String getReleaseFormatDescription() { return releaseFormatDescription; }
-    public void setReleaseFormatDescription(String releaseFormatDescription) { this.releaseFormatDescription = releaseFormatDescription; }
+    public String getRelease_format_description() { return release_format_description; }
+    public void setRelease_format_description(String release_format_description) { this.release_format_description = release_format_description; }
 
     public String getReleased() { return released; }
     public void setReleased(String released) { this.released = released; }
@@ -127,8 +127,8 @@ public class AlbumDTO {
     public String getReleased_formatted() { return released_formatted; }
     public void setReleased_formatted(String released_formatted) { this.released_formatted = released_formatted; }
 
-    public String getReleaseType() { return releaseType; }
-    public void setReleaseType(String releaseType) { this.releaseType = releaseType; }
+    public String getRelease_type() { return release_type; }
+    public void setRelease_type(String release_type) { this.release_type = release_type; }
 
     public String getDate_added() { return date_added; }
     public void setDate_added(String date_added) { this.date_added = date_added; }
@@ -139,11 +139,11 @@ public class AlbumDTO {
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
-    public String getWikipediaUrl() { return wikipediaUrl; }
-    public void setWikipediaUrl(String wikipediaUrl) { this.wikipediaUrl = wikipediaUrl; }
+    public String getWikipedia_url() { return wikipedia_url; }
+    public void setWikipedia_url(String wikipedia_url) { this.wikipedia_url = wikipedia_url; }
 
-    public String getCoverartarchiveThumb() { return coverartarchiveThumb; }
-    public void setCoverartarchiveThumb(String coverartarchiveThumb) { this.coverartarchiveThumb = coverartarchiveThumb; }
+    public String getCoverartarchive_thumb() { return coverartarchive_thumb; }
+    public void setCoverartarchive_thumb(String coverartarchive_thumb) { this.coverartarchive_thumb = coverartarchive_thumb; }
 
     public String getCompanies() { return companies; }
     public void setCompanies(String companies) { this.companies = companies; }
