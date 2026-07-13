@@ -55,7 +55,7 @@ public class Artist {
     @Column(name = "thumbnail_url", length = 1000)
     private String thumbnail_url;
 
-    @Column(name = "image_author")
+    @Column(name = "image_author", length = 1000)
     private String image_author;
 
     @Column(name = "image_license")
