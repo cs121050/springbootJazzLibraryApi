@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 
-
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestHeader;
 
 
 @RestController   //http://localhost:8080
@@ -49,6 +52,50 @@ public class VideoCntr {
         return videoRep.retrieveAll();    
     }
 
+ // ===== NEW ENDPOINT =====
+    @GetMapping("/filterOutUnavailableVideos")
+    public ResponseEntity<String> filterOutUnavailableVideos(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader) {
+
+        // 1. Validate presence of Authorization header
+        if (authHeader == null || !authHeader.startsWith("Basic ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Missing or invalid Authorization header. Expected: Basic <base64>");
+        }
+
+        // 2. Decode Base64 credentials (format: "username:password")
+        String base64Credentials = authHeader.substring("Basic ".length());
+        String credentials;
+        try {
+            byte[] decoded = java.util.Base64.getDecoder().decode(base64Credentials);
+            credentials = new String(decoded, java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid Base64 encoding.");
+        }
+
+        // 3. Split and validate
+        String[] parts = credentials.split(":", 2);
+        if (parts.length != 2) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid format. Expected 'username:password'.");
+        }
+
+        String username = parts[0];
+        String password = parts[1];
+
+        // Hardcoded credentials (move to config later)
+        if (!"admin".equals(username) || !"@dm!n".equals(password)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body("Invalid username or password.");
+        }
+
+        // 4. Process all videos (this may take time)
+        String summary = videoRep.processAllVideosAvailability();
+
+        return ResponseEntity.ok(summary);
+    }
+    
 //    
 //    @GetMapping(value = "/byDurationId/all", produces = MediaType.APPLICATION_JSON_VALUE)
 //    public List<List<Video>> retrieveAllDurationId() { 
