@@ -86,7 +86,7 @@ public class VideoRep {
     private static final String STATUS_MEMBERS_ONLY = "-4";
     private static final String STATUS_OTHER_ERROR = "-5";
 
-    @Transactional
+    @Transactional(timeout = 3600)
     public String processAllVideosAvailability() {
         // ----- 1. Initial status counts -----
         Map<String, Long> initialCounts = getStatusCounts();
