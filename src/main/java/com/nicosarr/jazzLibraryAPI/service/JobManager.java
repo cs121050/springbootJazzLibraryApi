@@ -54,4 +54,21 @@ public class JobManager {
     public interface RunnableWithContext {
         void run(JobContext context);
     }
+    
+    /**
+     * Request cancellation of a running job.
+     * @param jobId the job ID
+     * @return true if the job was found and cancellation was requested, false otherwise
+     */
+    public boolean cancelJob(String jobId) {
+        JobContext context = activeJobs.get(jobId);
+        if (context == null) {
+            logger.warn("Cancel request for unknown job: {}", jobId);
+            return false;
+        }
+        context.requestCancel();
+        logger.info("Cancellation requested for job: {}", jobId);
+        return true;
+    }
+    
 }
