@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.web.client.RestTemplate;
 
+
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -66,7 +67,7 @@ public class FirebaseConfig {
     public FirebaseAuth firebaseAuth() {
         return FirebaseAuth.getInstance();
     }
-    
+  
     @Bean
     public RestTemplate restTemplate() {
         return new RestTemplate();
