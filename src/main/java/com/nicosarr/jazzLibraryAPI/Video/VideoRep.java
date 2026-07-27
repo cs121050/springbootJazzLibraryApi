@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
 import com.nicosarr.jazzLibraryAPI.Artist.ArtistWithVideoDTO;
 import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
-
+import com.nicosarr.jazzLibraryAPI.util.JobContext;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -87,27 +87,34 @@ public class VideoRep {
     private static final String STATUS_OTHER_ERROR = "-5";
 
     @Transactional(timeout = 3600)
-    public String processAllVideosAvailability() {
+    public String processAllVideosAvailability(JobContext jobContext) {
+        // Get jobId for logging (if available)
+        String jobId = (jobContext != null) ? jobContext.getJobId() : "unknown";
+
         // ----- 1. Initial status counts -----
         Map<String, Long> initialCounts = getStatusCounts();
-        logger.info("=== INITIAL STATUS DISTRIBUTION ===");
-        logger.info("{}", formatStatusCounts(initialCounts));
+        logger.info("=== [Job {}] INITIAL STATUS DISTRIBUTION ===", jobId);
+        logger.info("[Job {}] {}", jobId, formatStatusCounts(initialCounts));
 
-        // ----- 2. Collect videos and determine new statuses -----
+        // ----- 2. Collect videos -----
         List<Video> videos = entityManager.createQuery("SELECT v FROM Video v", Video.class).getResultList();
         int total = videos.size();
         int available = 0, notEmbeddable = 0, notFound = 0, privateCount = 0, membersOnly = 0, otherError = 0;
 
-        // Map: new status -> list of video IDs that should be updated to that status
         Map<String, List<Integer>> idsByNewStatus = new HashMap<>();
-        
         Map<Integer, String> oldStatusMap = new HashMap<>();
-        // List of change messages (optional, but keep for logging)
         List<String> changes = new ArrayList<>();
 
-        logger.info("Starting video availability check for {} videos.", total);
+        logger.info("[Job {}] Starting video availability check for {} videos.", jobId, total);
 
         for (int i = 0; i < videos.size(); i++) {
+            // ---------- CANCELLATION CHECK (1) ----------
+            if (jobContext != null && jobContext.isCancelled()) {
+                logger.warn("[Job {}] Cancellation requested by user. Stopping at video index {}/{}.",
+                            jobId, i, total);
+                return "Processing cancelled by user. " + i + " videos processed.";
+            }
+
             Video video = videos.get(i);
             int videoId = video.getVideo_id();
             String oldStatus = video.getVideo_availability();
@@ -126,7 +133,7 @@ public class VideoRep {
                 }
             }
 
-            // Count per status for progress reporting
+            // Count per status
             switch (newStatus) {
                 case STATUS_AVAILABLE: available++; break;
                 case STATUS_NOT_EMBEDDABLE: notEmbeddable++; break;
@@ -136,37 +143,46 @@ public class VideoRep {
                 default: otherError++; break;
             }
 
-            // If status changed, collect ID for batch update and log change
             if (oldStatus == null || !oldStatus.equals(newStatus)) {
                 idsByNewStatus.computeIfAbsent(newStatus, k -> new ArrayList<>()).add(videoId);
                 String changeMsg = String.format("video_id %d (\"%s\"): %s -> %s",
-                        videoId,
-                        video.getVideo_name(),
-                        oldStatus != null ? oldStatus : "NULL",
-                        newStatus);
+                        videoId, video.getVideo_name(), oldStatus != null ? oldStatus : "NULL", newStatus);
                 changes.add(changeMsg);
             }
 
-            // Progress log
+            // Progress log (includes jobId)
             int processed = i + 1;
             if (processed % 10 == 0 || processed == total) {
                 int percent = (int) ((double) processed / total * 100);
-                logger.info("Progress: {}/{} ({}%) – Available: {}, Not embeddable: {}, Not found: {}, Private: {}, Members only: {}, Other errors: {}",
-                        processed, total, percent,
+                logger.info("[Job {}] Progress: {}/{} ({}%) – Available: {}, Not embeddable: {}, Not found: {}, Private: {}, Members only: {}, Other errors: {}",
+                        jobId, processed, total, percent,
                         available, notEmbeddable, notFound, privateCount, membersOnly, otherError);
             }
 
             // Delay (respect YouTube TOS)
-            try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                // Restore interrupted status
+                Thread.currentThread().interrupt();
+                // If cancellation was requested, return early
+                if (jobContext != null && jobContext.isCancelled()) {
+                    logger.warn("[Job {}] Interrupted due to cancellation. Stopping at video index {}.", jobId, processed);
+                    return "Interrupted and cancelled. " + processed + " videos processed.";
+                }
+                // Otherwise, treat as an unexpected interruption
+                logger.warn("[Job {}] Interrupted during sleep, but cancellation not requested. Continuing?", jobId);
+                // You may choose to break or continue – here we break to be safe.
+                break;
+            }
         }
 
-        // ----- 3. Execute batch updates per status -----
+        // ----- 3. Execute batch updates -----
         int totalUpdated = 0;
         for (Map.Entry<String, List<Integer>> entry : idsByNewStatus.entrySet()) {
             String status = entry.getKey();
             List<Integer> ids = entry.getValue();
             if (!ids.isEmpty()) {
-                // Chunk the IDs in batches of 1000 to avoid SQL length limits
                 for (int i = 0; i < ids.size(); i += 1000) {
                     List<Integer> chunk = ids.subList(i, Math.min(i + 1000, ids.size()));
                     String jpql = "UPDATE Video v SET v.video_availability = :status WHERE v.video_id IN (:ids)";
@@ -175,19 +191,19 @@ public class VideoRep {
                             .setParameter("ids", chunk)
                             .executeUpdate();
                     totalUpdated += updated;
-                    logger.info("Bulk update chunk: {} videos set to status '{}'", updated, status);
+                    logger.info("[Job {}] Bulk update chunk: {} videos set to status '{}'", jobId, updated, status);
                 }
             }
         }
-        
-        entityManager.clear();   // Detach all managed entities (they are stale now)
+
+        entityManager.clear();   // Detach all managed entities
 
         // ----- 4. Final status counts -----
         Map<String, Long> finalCounts = getStatusCounts();
-        logger.info("=== FINAL STATUS DISTRIBUTION ===");
-        logger.info("{}", formatStatusCounts(finalCounts));
+        logger.info("=== [Job {}] FINAL STATUS DISTRIBUTION ===", jobId);
+        logger.info("[Job {}] {}", jobId, formatStatusCounts(finalCounts));
 
-        // Build summary (same as before)
+        // Build summary
         StringBuilder summaryBuilder = new StringBuilder();
         summaryBuilder.append(String.format(
                 "Processed %d videos. Available: %d, Not embeddable: %d, Not found: %d, Private: %d, Members only: %d, Other errors: %d",
@@ -204,17 +220,17 @@ public class VideoRep {
             for (String change : changes) {
                 summaryBuilder.append(change).append("\n");
             }
-            logger.info("Changes detected ({}):", changes.size());
+            logger.info("[Job {}] Changes detected ({}):", jobId, changes.size());
             for (String change : changes) {
-                logger.info("  {}", change);
+                logger.info("[Job {}]   {}", jobId, change);
             }
         } else {
             summaryBuilder.append("\n\nNo status changes.");
-            logger.info("No status changes detected.");
+            logger.info("[Job {}] No status changes detected.", jobId);
         }
 
         String summary = summaryBuilder.toString();
-        logger.info("✅ {}", summary);
+        logger.info("[Job {}] ✅ {}", jobId, summary);
         return summary;
     }
 //    
