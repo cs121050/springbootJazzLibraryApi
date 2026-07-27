@@ -22,215 +22,220 @@ public class TypeRep {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    public List<Type> retrieveAll() {
-        String jpql = "SELECT t FROM Type t"; 
-        Query query = entityManager.createQuery(jpql, Type.class);
-        List<Type> typeList = query.getResultList();
-        return typeList; 
-    }
-
-	public int create(Type type) { 
-		String sql = "INSERT INTO Type (type_name, type_video_count) VALUES (?, ?)";
-		return jdbcTemplate.update(sql, type.getType_name(), type.getType_video_count());
-	} 
-	 
-	public int update(Type type) { 
-		String sql = "UPDATE Type SET type_name = ?, type_video_count = ? WHERE type_id = ?";
-		return jdbcTemplate.update(sql, type.getType_name(), type.getType_video_count(), type.getType_id());	
-	} 
-
-    public Type retrieveById(int typeId) {
-        String jpql = "SELECT t FROM Type t WHERE t.type_id= :typeId"; 
-        Query query = entityManager.createQuery(jpql, Type.class);
-        query.setParameter("typeId", typeId);
-        
-        return (Type) query.getSingleResult();
-    }       
-    
-    public List<Type> retrieveByName(String typeName) {
-        String jpql = "SELECT t FROM Type t WHERE t.type_name= :typeName";
-        Query query = entityManager.createQuery(jpql, Type.class);
-
-        query.setParameter("typeName", typeName);
-   
-        List<Type> typeList = query.getResultList();
-        return typeList;    
-    }
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByDurationId(int durationId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +
-                 "WHERE v.duration_id = :durationId " +
-                 "GROUP BY t.type_id, t.type_name";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("durationId", durationId);
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }      
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByInstrumentId(int instrumentId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +
-                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +  
-                 "INNER JOIN Artist a ON a.artist_id = vca.artist.artist_id " +              
-                 "WHERE a.instrument_id = :instrumentId " +
-                 "GROUP BY t.type_id, t.type_name";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("instrumentId", instrumentId);
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    
-		    
-		    
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }  
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByArtistId(int artistId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +
-                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +            
-                 "WHERE vca.artist.artist_id = :artistId " +
-                 "GROUP BY t.type_id, t.type_name";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("artistId", artistId);
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    
-		    
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }      
-    
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByArtistIdAndDurationId(int artistId, int durationId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +
-                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +            
-                 "WHERE vca.artist.artist_id = :artistId AND v.duration_id = :durationId " +
-                 "GROUP BY t.type_id, t.type_name";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("artistId", artistId);
- 		query.setParameter("durationId", durationId); 		
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    
-		    
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }          
-    
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByTypeIdAndDurationId(int typeId, int durationId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +          
-                 "WHERE t.type_id = :typeId AND v.duration_id = :durationId " +
-                 "GROUP BY t.type_id, t.type_name";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("typeId", typeId);
- 		query.setParameter("durationId", durationId); 		
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    
-		    
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }
-    
-    @Transactional                           // Initialize the lazy hibernate collection   
-    public List<Type> retrieveByInstrumentIdAndDurationId(int instrumentId,int durationId) {
-         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
-                 "FROM Type t " +
-                 "INNER JOIN Video v ON v.type_id = t.type_id " +
-                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +  
-                 "INNER JOIN Artist a ON a.artist_id = vca.artist.artist_id " +              
-                 "WHERE a.instrument_id = :instrumentId AND v.duration_id = :durationId  " +
-                 "GROUP BY t.type_id, t.type_name ";
-
- 		Query query = entityManager.createQuery(jpql);
- 		query.setParameter("instrumentId", instrumentId);
- 		query.setParameter("durationId", durationId); 		
- 		
-
-	    List<Type> resultList = new ArrayList<>();
-	    List<Object[]> results = query.getResultList();
-		for (Object[] row : results) {
-		    Type type = new Type();
-		    type.setType_id((Integer) row[0]);
-		    type.setType_name((String) row[1]);		    
-		    type.setType_video_count(((Number) row[2]).intValue());
-		    
-		    
-		    
-		    resultList.add(type);
-		}
-
-	    return resultList;
-    }      
-    
-    
+    public List<TypeDTO> retrieveAll() {
+		String jpql = "SELECT t FROM Type t "+
+					  "ORDER BY t.type_id"; 
+		Query query = entityManager.createQuery(jpql, Type.class);
+		List<Type> typeList = query.getResultList();
+		
+		// Convert entities to DTOs
+ 	    return typeList.stream()
+ 	        .map(TypeDTO::fromEntity)
+ 	        .collect(java.util.stream.Collectors.toList());
+	}
+//
+//	public int create(Type type) { 
+//		String sql = "INSERT INTO Type (type_name, type_video_count) VALUES (?, ?)";
+//		return jdbcTemplate.update(sql, type.getType_name(), type.getType_video_count());
+//	} 
+//	 
+//	public int update(Type type) { 
+//		String sql = "UPDATE Type SET type_name = ?, type_video_count = ? WHERE type_id = ?";
+//		return jdbcTemplate.update(sql, type.getType_name(), type.getType_video_count(), type.getType_id());	
+//	} 
+//
+//    public Type retrieveById(int typeId) {
+//        String jpql = "SELECT t FROM Type t WHERE t.type_id= :typeId"; 
+//        Query query = entityManager.createQuery(jpql, Type.class);
+//        query.setParameter("typeId", typeId);
+//        
+//        return (Type) query.getSingleResult();
+//    }       
+//    
+//    public List<Type> retrieveByName(String typeName) {
+//        String jpql = "SELECT t FROM Type t WHERE t.type_name= :typeName";
+//        Query query = entityManager.createQuery(jpql, Type.class);
+//
+//        query.setParameter("typeName", typeName);
+//   
+//        List<Type> typeList = query.getResultList();
+//        return typeList;    
+//    }
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByDurationId(int durationId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +
+//                 "WHERE v.duration_id = :durationId " +
+//                 "GROUP BY t.type_id, t.type_name";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("durationId", durationId);
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }      
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByInstrumentId(int instrumentId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +
+//                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +  
+//                 "INNER JOIN Artist a ON a.artist_id = vca.artist.artist_id " +              
+//                 "WHERE a.instrument_id = :instrumentId " +
+//                 "GROUP BY t.type_id, t.type_name";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("instrumentId", instrumentId);
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    
+//		    
+//		    
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }  
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByArtistId(int artistId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +
+//                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +            
+//                 "WHERE vca.artist.artist_id = :artistId " +
+//                 "GROUP BY t.type_id, t.type_name";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("artistId", artistId);
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    
+//		    
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }      
+//    
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByArtistIdAndDurationId(int artistId, int durationId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +
+//                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +            
+//                 "WHERE vca.artist.artist_id = :artistId AND v.duration_id = :durationId " +
+//                 "GROUP BY t.type_id, t.type_name";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("artistId", artistId);
+// 		query.setParameter("durationId", durationId); 		
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    
+//		    
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }          
+//    
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByTypeIdAndDurationId(int typeId, int durationId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +          
+//                 "WHERE t.type_id = :typeId AND v.duration_id = :durationId " +
+//                 "GROUP BY t.type_id, t.type_name";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("typeId", typeId);
+// 		query.setParameter("durationId", durationId); 		
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    
+//		    
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }
+//    
+//    @Transactional                           // Initialize the lazy hibernate collection   
+//    public List<Type> retrieveByInstrumentIdAndDurationId(int instrumentId,int durationId) {
+//         String jpql = "SELECT t.type_id, t.type_name, COUNT(t) as type_video_count " +
+//                 "FROM Type t " +
+//                 "INNER JOIN Video v ON v.type_id = t.type_id " +
+//                 "INNER JOIN VideoContainsArtist vca ON v.video_id = vca.video.video_id " +  
+//                 "INNER JOIN Artist a ON a.artist_id = vca.artist.artist_id " +              
+//                 "WHERE a.instrument_id = :instrumentId AND v.duration_id = :durationId  " +
+//                 "GROUP BY t.type_id, t.type_name ";
+//
+// 		Query query = entityManager.createQuery(jpql);
+// 		query.setParameter("instrumentId", instrumentId);
+// 		query.setParameter("durationId", durationId); 		
+// 		
+//
+//	    List<Type> resultList = new ArrayList<>();
+//	    List<Object[]> results = query.getResultList();
+//		for (Object[] row : results) {
+//		    Type type = new Type();
+//		    type.setType_id((Integer) row[0]);
+//		    type.setType_name((String) row[1]);		    
+//		    type.setType_video_count(((Number) row[2]).intValue());
+//		    
+//		    
+//		    
+//		    resultList.add(type);
+//		}
+//
+//	    return resultList;
+//    }      
+//    
+//    
     
 }
 /* 

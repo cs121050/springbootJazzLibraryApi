@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: create  # This creates tables from entities
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+    show-sql: false
+    open-in-view: false
+    defer-datasource-initialization: true  # Wait for JPA to create tables first
+  
+  sql:
+    init:
+      mode: always
+      data-locations: classpath:data_prod.sql
+      continue-on-error: true   
+      platform: postgresql  # Add this!
+
+  transaction:
+    default-timeout: 90  # Transaction timeout in seconds
+    rollback-on-commit-failure: true  # Rollback transaction if commit failsn
+
+server:
+  port: ${PORT:8080}

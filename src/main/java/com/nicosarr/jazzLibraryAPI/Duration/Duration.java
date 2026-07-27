@@ -1,12 +1,20 @@
 package com.nicosarr.jazzLibraryAPI.Duration;
 import java.util.ArrayList;
+import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
+import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Video.Video;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -17,31 +25,39 @@ public class Duration {
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment
     private int duration_id;
-    private String duration_name;
-    private int duration_video_count;    
 	
+    @Column(name = "duration_name")	      
+	private String duration_name;
+    
+    @Column(name = "duration_description")	      
+	private String duration_description;
+	
+    @OneToMany(mappedBy = "duration", fetch = FetchType.LAZY)
+    @JsonBackReference
+    @JsonIgnore
+    private List<Video> video = new ArrayList<>();
+    
     public Duration () {}
-    public Duration (int duration_id, String duration_name, int duration_video_count){
+    public Duration (int duration_id, String duration_name, String duration_description){
 	   	this.duration_id = duration_id;
 	   	this.duration_name = duration_name;
-	   	this.duration_video_count = duration_video_count;
-    }
-    public Duration (String duration_name, int duration_video_count){
- 	   	this.duration_name = duration_name;
-	   	this.duration_video_count = duration_video_count; 	   	
-    }    
+	   	this.duration_description = duration_description;
+    }  
     public Duration (String duration_name){
  	   	this.duration_name = duration_name;
-	   	this.duration_video_count = 0; 	   	
     }        
+    public Duration (int duration_id, String duration_name){
+	   	this.duration_id = duration_id;
+	   	this.duration_name = duration_name;
+	}
 	public String toString(){
-        return "duration_id:" + duration_id + "#duration_name:" + duration_name+ "#duration_video_count:" + duration_video_count;
+        return "duration_id:" + duration_id + "#duration_name:" + duration_name+ "#duration_video_count:";
     }   
     public String valuesToString(){
-        return duration_id + "#" + duration_name + "#" + duration_video_count;
+        return duration_id + "#" + duration_name + "#";
     }      
     public Duration toObject(){ 
-        return new Duration(this.duration_id, this.duration_name, this.duration_video_count);          
+        return new Duration(this.duration_id, this.duration_name);          
     }
 	public int getDuration_id() {
 		return duration_id;
@@ -55,31 +71,18 @@ public class Duration {
 	public void setDuration_name(String duration_name) {
 		this.duration_name = duration_name;
 	}
-	public int getDuration_video_count() {
-		return duration_video_count;
+	public List<Video> getVideo() {
+		return video;
 	}
-	public void setDuration_video_count(int duration_video_count) {
-		this.duration_video_count = duration_video_count;
+	public void setVideo(List<Video> video) {
+		this.video = video;
 	}
-
+	public String getDuration_description() {
+		return duration_description;
+	}
+	public void setDuration_description(String duration_description) {
+		this.duration_description = duration_description;
+	}
 	
-}
-    
-@JacksonXmlRootElement(localName = "durationArrayListManager")
-class DurationArrayListManager {
 
-    private ArrayList<Duration> durationList;
-
-    public DurationArrayListManager() {
-    	durationList = new ArrayList<>();
-    }
-
-    public void addDuration(Duration duration) {
-    	durationList.add(duration);
-    }
-
-    public ArrayList<Duration> getDuration() {
-        return durationList;
-    }  
-   	
 }
