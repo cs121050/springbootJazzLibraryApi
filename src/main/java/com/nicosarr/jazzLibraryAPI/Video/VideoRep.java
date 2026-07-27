@@ -93,48 +93,54 @@ public class VideoRep {
         logger.info("=== INITIAL STATUS DISTRIBUTION ===");
         logger.info("{}", formatStatusCounts(initialCounts));
 
-        // ----- 2. Process each video -----
+        // ----- 2. Collect videos and determine new statuses -----
         List<Video> videos = entityManager.createQuery("SELECT v FROM Video v", Video.class).getResultList();
         int total = videos.size();
         int available = 0, notEmbeddable = 0, notFound = 0, privateCount = 0, membersOnly = 0, otherError = 0;
+
+        // Map: new status -> list of video IDs that should be updated to that status
+        Map<String, List<Integer>> idsByNewStatus = new HashMap<>();
+        
+        Map<Integer, String> oldStatusMap = new HashMap<>();
+        // List of change messages (optional, but keep for logging)
         List<String> changes = new ArrayList<>();
 
         logger.info("Starting video availability check for {} videos.", total);
 
         for (int i = 0; i < videos.size(); i++) {
             Video video = videos.get(i);
+            int videoId = video.getVideo_id();
             String oldStatus = video.getVideo_availability();
+            oldStatusMap.put(videoId, oldStatus);
 
             String videoPath = video.getVideo_path();
+            String newStatus;
             if (videoPath == null || videoPath.trim().isEmpty()) {
-                video.setVideo_availability(STATUS_OTHER_ERROR);
-                otherError++;
+                newStatus = STATUS_OTHER_ERROR;
             } else {
-                String videoId = extractYouTubeId(videoPath);
-                if (videoId == null) {
-                    video.setVideo_availability(STATUS_OTHER_ERROR);
-                    otherError++;
+                String videoIdStr = extractYouTubeId(videoPath);
+                if (videoIdStr == null) {
+                    newStatus = STATUS_OTHER_ERROR;
                 } else {
-                    String status = checkVideoStatus(videoId);
-                    video.setVideo_availability(status);
-                    entityManager.merge(video);
-
-                    switch (status) {
-                        case STATUS_AVAILABLE: available++; break;
-                        case STATUS_NOT_EMBEDDABLE: notEmbeddable++; break;
-                        case STATUS_NOT_FOUND: notFound++; break;
-                        case STATUS_PRIVATE: privateCount++; break;
-                        case STATUS_MEMBERS_ONLY: membersOnly++; break;
-                        default: otherError++; break;
-                    }
+                    newStatus = checkVideoStatus(videoIdStr);
                 }
             }
 
-            // Record change if any
-            String newStatus = video.getVideo_availability();
+            // Count per status for progress reporting
+            switch (newStatus) {
+                case STATUS_AVAILABLE: available++; break;
+                case STATUS_NOT_EMBEDDABLE: notEmbeddable++; break;
+                case STATUS_NOT_FOUND: notFound++; break;
+                case STATUS_PRIVATE: privateCount++; break;
+                case STATUS_MEMBERS_ONLY: membersOnly++; break;
+                default: otherError++; break;
+            }
+
+            // If status changed, collect ID for batch update and log change
             if (oldStatus == null || !oldStatus.equals(newStatus)) {
+                idsByNewStatus.computeIfAbsent(newStatus, k -> new ArrayList<>()).add(videoId);
                 String changeMsg = String.format("video_id %d (\"%s\"): %s -> %s",
-                        video.getVideo_id(),
+                        videoId,
                         video.getVideo_name(),
                         oldStatus != null ? oldStatus : "NULL",
                         newStatus);
@@ -154,25 +160,45 @@ public class VideoRep {
             try { Thread.sleep(500); } catch (InterruptedException e) { Thread.currentThread().interrupt(); break; }
         }
 
-        // ----- 3. Final status counts -----
+        // ----- 3. Execute batch updates per status -----
+        int totalUpdated = 0;
+        for (Map.Entry<String, List<Integer>> entry : idsByNewStatus.entrySet()) {
+            String status = entry.getKey();
+            List<Integer> ids = entry.getValue();
+            if (!ids.isEmpty()) {
+                // Chunk the IDs in batches of 1000 to avoid SQL length limits
+                for (int i = 0; i < ids.size(); i += 1000) {
+                    List<Integer> chunk = ids.subList(i, Math.min(i + 1000, ids.size()));
+                    String jpql = "UPDATE Video v SET v.video_availability = :status WHERE v.video_id IN (:ids)";
+                    int updated = entityManager.createQuery(jpql)
+                            .setParameter("status", status)
+                            .setParameter("ids", chunk)
+                            .executeUpdate();
+                    totalUpdated += updated;
+                    logger.info("Bulk update chunk: {} videos set to status '{}'", updated, status);
+                }
+            }
+        }
+        
+        entityManager.clear();   // Detach all managed entities (they are stale now)
+
+        // ----- 4. Final status counts -----
         Map<String, Long> finalCounts = getStatusCounts();
         logger.info("=== FINAL STATUS DISTRIBUTION ===");
         logger.info("{}", formatStatusCounts(finalCounts));
 
-        // Build summary
+        // Build summary (same as before)
         StringBuilder summaryBuilder = new StringBuilder();
         summaryBuilder.append(String.format(
                 "Processed %d videos. Available: %d, Not embeddable: %d, Not found: %d, Private: %d, Members only: %d, Other errors: %d",
                 total, available, notEmbeddable, notFound, privateCount, membersOnly, otherError
         ));
 
-        // Append initial and final stats to the response
         summaryBuilder.append("\n\n=== INITIAL STATUS ===\n");
         summaryBuilder.append(formatStatusCounts(initialCounts));
         summaryBuilder.append("\n=== FINAL STATUS ===\n");
         summaryBuilder.append(formatStatusCounts(finalCounts));
 
-        // Append change log if any
         if (!changes.isEmpty()) {
             summaryBuilder.append("\n=== CHANGES ===\n");
             for (String change : changes) {
