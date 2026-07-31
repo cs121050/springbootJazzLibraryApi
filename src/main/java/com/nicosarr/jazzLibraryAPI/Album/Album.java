@@ -44,6 +44,9 @@ public class Album {
 
 	@Column(name = "wikipedia_url")
 	private String wikipedia_url;
+	
+	@Column(name = "wikidata_id")
+	private String wikidata_id;
 
 	@Column(name = "coverartarchive_thumb")
 	private String coverartarchive_thumb;
@@ -96,7 +99,7 @@ public class Album {
 			String released_formatted, String release_type, String date_added, String date_changed, String title,
 			String wikipedia_url, String coverartarchive_thumb, String companies, String extra_artists, String genres,
 			String images, String labels, String styles, String tracklist, String videos,
-			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data, String musicbrainz_uuid) {
+			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data, String musicbrainz_uuid, String wikidata_id) {
 		this.album_id = album_id;
 		this.release_id = release_id;
 		this.master_id = master_id;
@@ -124,6 +127,8 @@ public class Album {
 		this.albumContainsArtists = albumContainsArtists;
 		this.wikipedia_data = wikipedia_data;
 		this.musicbrainz_uuid = musicbrainz_uuid;
+		this.wikidata_id = wikidata_id;
+		
 	}
 
 	// Getters and setters
@@ -195,6 +200,14 @@ public class Album {
 		return released;
 	}
 
+	public String getWikidata_id() {
+	    return wikidata_id;
+	}
+
+	public void setWikidata_id(String wikidata_id) {
+	    this.wikidata_id = wikidata_id;
+	}
+	
 	public void setReleased(String released) {
 		this.released = released;
 	}
