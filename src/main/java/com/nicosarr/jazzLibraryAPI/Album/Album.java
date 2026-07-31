@@ -75,6 +75,9 @@ public class Album {
 	
 	@Column(columnDefinition = "TEXT")
 	private String wikipedia_data; // JSON array
+	
+    @Column(name = "musicbrainz_uuid")    
+    private String musicbrainz_uuid; 
 
 	// One-to-many relationship with the junction table
 	@OneToMany(mappedBy = "album", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -93,7 +96,7 @@ public class Album {
 			String released_formatted, String release_type, String date_added, String date_changed, String title,
 			String wikipedia_url, String coverartarchive_thumb, String companies, String extra_artists, String genres,
 			String images, String labels, String styles, String tracklist, String videos,
-			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data) {
+			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data, String musicbrainz_uuid) {
 		this.album_id = album_id;
 		this.release_id = release_id;
 		this.master_id = master_id;
@@ -120,6 +123,7 @@ public class Album {
 		this.videos = videos;
 		this.albumContainsArtists = albumContainsArtists;
 		this.wikipedia_data = wikipedia_data;
+		this.musicbrainz_uuid = musicbrainz_uuid;
 	}
 
 	// Getters and setters
@@ -287,6 +291,15 @@ public class Album {
 		return labels;
 	}
 
+    // Getter and setter
+    public String getMusicbrainz_uuid() {
+        return musicbrainz_uuid;
+    }
+
+    public void setMusicbrainz_uuid(String musicbrainz_uuid) {
+        this.musicbrainz_uuid = musicbrainz_uuid;
+    }
+	
 	public void setLabels(String labels) {
 		this.labels = labels;
 	}
