@@ -53,4 +53,16 @@ import jakarta.persistence.PersistenceContext;
 	            .map(ArtistDTO::fromEntity)
 	            .collect(Collectors.toList());
 	    }
+	    
+	    /**
+	     * Returns all artists that have a non‑null and non‑empty musicbrainz_uuid.
+	     */
+	    public List<Artist> findArtistsWithMusicbrainzUuid() {
+	        String jpql = "SELECT a FROM Artist a " +
+	                      "WHERE a.musicbrainz_uuid IS NOT NULL " +
+	                      "AND a.musicbrainz_uuid <> ''";
+	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);
+	        return query.getResultList();
+	    }
+	    
 }

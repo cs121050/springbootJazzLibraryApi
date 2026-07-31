@@ -15,6 +15,7 @@ import org.springframework.http.MediaType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController // http://localhost:8080
 @RequestMapping("artistService")
@@ -40,5 +41,14 @@ public class ArtistCntr {
     @GetMapping(value = "/all", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<ArtistDTO> retrieveAll() {
         return artistRep.retrieveAll();
+    }
+    
+    @Transactional
+    @GetMapping(value = "/alWithMusicbrainz", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ArtistDTO> getArtistsWithMusicbrainz() {
+        List<Artist> artists = artistRep.findArtistsWithMusicbrainzUuid();
+        return artists.stream()
+                      .map(ArtistDTO::fromEntity)
+                      .collect(Collectors.toList());
     }
 }
