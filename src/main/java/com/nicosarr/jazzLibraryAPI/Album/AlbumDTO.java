@@ -29,7 +29,8 @@ public class AlbumDTO {
     private String tracklist;
     private String videos;
     private String wikipedia_data;
-
+    private String musicbrainz_uuid;
+    
     public AlbumDTO() {}
     
     public AlbumDTO(int album_id, int release_id, Integer master_id, String youtube_video_id_for_thumbnail,
@@ -37,7 +38,7 @@ public class AlbumDTO {
                     String released, String released_formatted, String release_type, String date_added,
                     String date_changed, String title, String wikipedia_url, String coverartarchive_thumb,
                     String companies, String extra_artists, String genres, String images, String labels,
-                    String styles, String tracklist, String videos, String wikipedia_data) {
+                    String styles, String tracklist, String videos, String wikipedia_data, String musicbrainz_uuid) {
         this.album_id = album_id;
         this.release_id = release_id;
         this.master_id = master_id;
@@ -63,6 +64,7 @@ public class AlbumDTO {
         this.tracklist = tracklist;
         this.videos = videos;
         this.wikipedia_data = wikipedia_data;
+        this.musicbrainz_uuid = musicbrainz_uuid;
     }
 
     // Factory method to convert from entity
@@ -93,10 +95,14 @@ public class AlbumDTO {
         dto.setTracklist(album.getTracklist());
         dto.setVideos(album.getVideos());
         dto.setWikipedia_data(album.getWikipedia_data());
+        dto.setMusicbrainz_uuid(album.getMusicbrainz_uuid());
         return dto;
     }
 
     // Getters and setters
+    public String getMusicbrainz_uuid() { return musicbrainz_uuid; }
+    public void setMusicbrainz_uuid(String musicbrainz_uuid) { this.musicbrainz_uuid = musicbrainz_uuid; }
+    
     public int getAlbum_id() { return album_id; }
     public void setAlbum_id(int album_id) { this.album_id = album_id; }
 
