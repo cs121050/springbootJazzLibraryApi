@@ -16,6 +16,7 @@ public class ArtistDTO {
     private String image_license;
     private String image_source_url;
     private String wikipedia_data;
+    private String wikidata_id;
 
     public ArtistDTO() {}
 
@@ -23,7 +24,7 @@ public class ArtistDTO {
                      Integer artist_rank, int instrument_id, String musicbrainz_uuid,
                      String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                      String thumbnail_url, String image_author, String image_license,
-                     String image_source_url, String wikipedia_data) {
+                     String image_source_url, String wikipedia_data, String wikidata_id) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -38,6 +39,7 @@ public class ArtistDTO {
         this.image_license = image_license;
         this.image_source_url = image_source_url;
         this.wikipedia_data = wikipedia_data;
+        this.wikidata_id = wikidata_id;
     }
 
     public static ArtistDTO fromEntity(Artist artist) {
@@ -55,7 +57,8 @@ public class ArtistDTO {
             artist.getImage_author(),
             artist.getImage_license(),
             artist.getImage_source_url(),
-            artist.getWikipedia_data()
+            artist.getWikipedia_data(),
+            artist.getWikidata_id()
         );
     }
 
@@ -107,5 +110,11 @@ public class ArtistDTO {
 		this.wikipedia_data = wikipedia_data;
 	}
     
+	public String getWikidata_id() {
+	    return wikidata_id;
+	}
+	public void setWikidata_id(String wikidata_id) {
+	    this.wikidata_id = wikidata_id;
+	}
     
 }
