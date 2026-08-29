@@ -51,4 +51,12 @@ public class ArtistCntr {
                       .map(ArtistDTO::fromEntity)
                       .collect(Collectors.toList());
     }
+    
+    @PostMapping("/updateWikipediaInfo")
+    public String updateWikipediaInfo() {
+        // If you have a JobContext mechanism, you can pass one; otherwise use null
+        return artistRep.processAllArtistsWikipedia(null);
+    }
+    
+    
 }
