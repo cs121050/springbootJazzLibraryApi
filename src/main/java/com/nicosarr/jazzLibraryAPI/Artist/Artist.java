@@ -66,6 +66,9 @@ public class Artist {
     
     @Column(name = "wikipedia_data", columnDefinition = "TEXT")
     private String wikipedia_data;
+    
+    @Column(name = "wikidata_id")
+	private String wikidata_id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -90,7 +93,8 @@ public class Artist {
 
     public Artist(int artist_id, String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
-                  String thumbnail_url, String image_author, String image_license, String image_source_url, String wikipedia_data) {
+                  String thumbnail_url, String image_author, String image_license, 
+                  String image_source_url, String wikipedia_data, String wikidata_id) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -105,6 +109,7 @@ public class Artist {
         this.image_license = image_license;
         this.image_source_url = image_source_url;
         this.wikipedia_data = wikipedia_data;
+		this.wikidata_id = wikidata_id;
     }
 
     public Artist(String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
@@ -197,6 +202,14 @@ public class Artist {
     public String getWikipedia_data() { return wikipedia_data; }
 	public void setWikipedia_data(String wikipedia_data) { 	this.wikipedia_data = wikipedia_data; }
 
+	public String getWikidata_id() {
+	    return wikidata_id;
+	}
+
+	public void setWikidata_id(String wikidata_id) {
+	    this.wikidata_id = wikidata_id;
+	}
+	
 	@Override
     public String toString() {
         return "Artist [artist_id=" + artist_id + ", discogs_id=" + discogs_id + ", artist_name=" + artist_name
