@@ -12,10 +12,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import java.sql.SQLException;
 
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import com.nicosarr.jazzLibraryAPI.service.JobManager;
 
 @RestController // http://localhost:8080
 @RequestMapping("artistService")
@@ -23,10 +26,12 @@ public class ArtistCntr {
 
 	private ArrayList<Artist> artistList;
 	private final ArtistRep artistRep;
-
-	public ArtistCntr(ArtistRep artistRep) {
-		this.artistRep = artistRep;
-	}
+    private final JobManager jobManager;
+	
+    public ArtistCntr(ArtistRep artistRep, JobManager jobManager) {
+        this.artistRep = artistRep;
+        this.jobManager = jobManager;
+    }
 
 	@GetMapping(value = "", produces = MediaType.APPLICATION_XML_VALUE)
 	public String sayXMLHello() {
@@ -53,10 +58,16 @@ public class ArtistCntr {
     }
     
     @PostMapping("/updateWikipediaInfo")
-    public String updateWikipediaInfo() {
-        // If you have a JobContext mechanism, you can pass one; otherwise use null
-        return artistRep.processAllArtistsWikipedia(null);
-    }
-    
-    
+    public ResponseEntity<String> updateWikipediaInfo() {
+    	
+    	String jobId = jobManager.startJob((jobContext) -> {
+            String result = artistRep.processAllArtistsWikipedia(jobContext);
+            // Use jobContext.getJobId() instead of the outer variable
+            System.out.println("Job " + jobContext.getJobId() + " finished with result: " + result);
+        });
+
+        // ---- 3. Return 202 Accepted with the job ID ----
+        return ResponseEntity.accepted()
+                .body("Job started. ID: " + jobId);
+    }    
 }

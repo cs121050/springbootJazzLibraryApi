@@ -25,6 +25,7 @@ public class JobManager {
         String jobId = UUID.randomUUID().toString();
         JobContext context = new JobContext(jobId);
         activeJobs.put(jobId, context);
+        logger.info("Job {} started. Active jobs: {}", jobId, activeJobs.keySet());
         
         logger.info("Job {} started.", jobId);
         
@@ -37,7 +38,7 @@ public class JobManager {
                 context.setStatus("FAILED");
             } finally {
                 activeJobs.remove(jobId);
-                logger.info("Job {} removed from active jobs.", jobId);
+                logger.info("Job {} removed from active jobs. Remaining: {}", jobId, activeJobs.keySet());
             }
         });
         
@@ -61,6 +62,7 @@ public class JobManager {
      * @return true if the job was found and cancellation was requested, false otherwise
      */
     public boolean cancelJob(String jobId) {
+    	logger.info("Attempting to cancel {}. Active jobs: {}", jobId, activeJobs.keySet());
         JobContext context = activeJobs.get(jobId);
         if (context == null) {
             logger.warn("Cancel request for unknown job: {}", jobId);
