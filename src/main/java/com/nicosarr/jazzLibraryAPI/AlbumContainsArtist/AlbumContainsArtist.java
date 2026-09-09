@@ -29,6 +29,7 @@ public class AlbumContainsArtist {
     @JoinColumn(name = "album_id", insertable = false, updatable = false)
     @JsonIgnore
     private Album album;
+    @Transient
     private int album_id; 
 
     
