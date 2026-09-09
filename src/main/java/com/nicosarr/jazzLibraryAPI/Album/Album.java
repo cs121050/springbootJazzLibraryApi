@@ -15,8 +15,8 @@ public class Album {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int album_id; // internal primary key
 
-	@Column(unique = true, nullable = false)
-	private int release_id; // Discogs release ID
+	@Column(unique = true)
+	private Integer release_id;   // change from int to Integer
 
 	private Integer master_id; // Discogs master ID (if any)
 
@@ -40,6 +40,7 @@ public class Album {
 	private String date_added;
 	private String date_changed;
 
+	@Column(length = 500)
 	private String title;
 
 	@Column(name = "wikipedia_url")
@@ -140,11 +141,13 @@ public class Album {
 		this.album_id = album_id;
 	}
 
-	public int getRelease_id() {
+
+
+	public Integer getRelease_id() {
 		return release_id;
 	}
 
-	public void setRelease_id(int release_id) {
+	public void setRelease_id(Integer release_id) {
 		this.release_id = release_id;
 	}
 

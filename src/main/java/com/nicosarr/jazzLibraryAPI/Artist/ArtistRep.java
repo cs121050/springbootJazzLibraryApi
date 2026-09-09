@@ -76,6 +76,13 @@
 	        return query.getResultList();
 	    }
 	    
+	 // In ArtistRep.java
+	    public List<Artist> findArtistsWithWikipediaOrWikidata() {
+	        String jpql = "SELECT a FROM Artist a WHERE a.wikipedia_url IS NOT NULL OR a.wikidata_id IS NOT NULL";
+	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);
+	        return query.getResultList();
+	    }
+	    
 	    
 	    @Transactional(timeout = 3600)
 	    public String processAllArtistsWikipedia(JobContext jobContext) {
