@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 import java.io.IOException;
 import java.util.*;
@@ -36,8 +38,7 @@ public class AlbumWikipediaService {
         "retrieved", "isbn", "university", "press", "edited", "births",
         "deaths", "last edited", "use mdy", "use american", "oxford",
         "foreword", "interview", "blog", "archive", "wayback",
-        "journal", "editorial", "doi", "issn", "review", "obituary",
-        "bibliography", "references", "notes", "further reading"
+        "journal", "editorial", "doi", "issn", "review", "obituary",        "bibliography", "references", "notes", "further reading"
     );
 
     // ---------- Public entry point ----------
@@ -178,6 +179,8 @@ public class AlbumWikipediaService {
                 if (titleColumnIndex == -1) {
                     titleColumnIndex = 0;
                 }
+                
+                int yearColumnIndex = findYearColumnIndex(table); 
 
                 for (Element row : table.select("tr")) {
                     if (row.select("th").isEmpty()) {
@@ -197,12 +200,34 @@ public class AlbumWikipediaService {
                         Elements cells = row.select("td");
                         if (cells.size() > titleColumnIndex) {
                             Element titleCell = cells.get(titleColumnIndex);
-                            AlbumRawData data = parseAlbumCell(titleCell, artist);
+                            
+                            // NEW: if the title cell has no year, try the year column
+                            String raw = titleCell.text().trim();
+                            if (yearColumnIndex != -1 && cells.size() > yearColumnIndex
+                                    && !raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
+                                String y = cells.get(yearColumnIndex).text().trim();
+                                if (y.matches(".*\\b(19|20)\\d{2}\\b.*")) {
+                                    raw = y + ": " + raw;      // synthesise "1955: Ahmad Jamal Plays"
+                                }
+                            }
+                            
+                            if (!raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
+                                for (Element c : cells) {
+                                    String t = c.text().trim();
+                                    if (t.matches("\\s*(19|20)\\d{2}\\s*")) {
+                                        raw = t + ": " + raw;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            AlbumRawData data = extractFromRaw(raw, titleCell.html(), artist);
                             if (data != null) {
                                 data.setMain(isMain);
                                 albums.add(data);
-                                logger.debug("Added album from table: '{}' (year={})", data.getTitle(), data.getYear());
-                            }
+                                logger.debug("Added album from table: '{}' (year={})",
+                                             data.getTitle(), data.getYear());
+                            }                           
                         }
                     }
                 }
@@ -246,9 +271,8 @@ public class AlbumWikipediaService {
     private int findTitleColumnIndex(Element table) {
         Elements headers = table.select("th");
         for (int i = 0; i < headers.size(); i++) {
-            if (headers.get(i).text().trim().equalsIgnoreCase("title")) {
-                return i;
-            }
+        	String h = headers.get(i).text().trim().toLowerCase();
+        	if (h.equals("title") || h.equals("album")) return i;
         }
         for (int i = 0; i < headers.size(); i++) {
             String lower = headers.get(i).text().toLowerCase();
@@ -271,9 +295,10 @@ public class AlbumWikipediaService {
         for (Element row : rows) {
             Elements cells = row.select("td");
             for (int i = 0; i < cells.size() && i < maxCols; i++) {
-                if (!cells.get(i).select("a[href*=/wiki/]").isEmpty()) {
-                    linkCounts[i]++;
-                }
+            	int score = 0;
+            	if (!cells.get(i).select("a[href*=/wiki/]").isEmpty()) score += 1;
+            	if (!cells.get(i).select("i").isEmpty())                 score += 5;
+            	linkCounts[i] += score;
             }
         }
         int bestCol = -1, bestCount = 0;
@@ -292,14 +317,15 @@ public class AlbumWikipediaService {
      * Core extraction: given raw text, returns an AlbumRawData with title, year, label, etc.
      * Handles leading "YYYY:" format, nested parentheses, multiple years, and label extraction.
      */
-    private AlbumRawData extractFromRaw(String raw, Artist artist) {
-        if (raw == null || raw.isBlank() || isNonAlbumLine(raw)) {
+    private AlbumRawData extractFromRaw(String raw, String html, Artist artist) {
+    	if (raw == null || raw.isBlank() || isNonAlbumLine(raw)) {
             return null;
         }
 
         String title = null;
         String year = null;
         String label = null;
+        String released = null;      
         String wikidataId = null;
         String wikipediaUrl = null;
 
@@ -384,8 +410,8 @@ public class AlbumWikipediaService {
 
         // ---- If still no year, give up ----
         if (year == null) {
-            return null;
-        }
+            title = raw.trim();          // <-- keep the whole raw as title
+            }
 
         // ---- Clean the title ----
         // 1. Remove date/list prefixes that Wikipedia uses:
@@ -407,11 +433,14 @@ public class AlbumWikipediaService {
 
         // 4. Remove trailing extra descriptive text (reissued, contains, etc.)
         title = title.replaceAll("(?i)\\s+(reissued|contains|recorded|including)\\s+.*$", "");
-        title = title.replaceAll("\\s*[;–-]\\s*[a-z].*$", "");
-
+        title = title.replaceAll("\\s+[;–-]\\s+[a-z].*$", "");
+//      ^^^^        ^^^^   require whitespace around the dash
+        
         // 5. Remove trailing punctuation
         title = title.replaceAll("\\s*[,;:–-]\\s*$", "");
 
+        title = title.replaceAll("\\[\\s*(?:\\d+|[a-z]+|note[^\\]]*)\\s*\\]", "").trim();
+        
         // 6. Trim
         title = title.trim();
 
@@ -423,10 +452,12 @@ public class AlbumWikipediaService {
                 if (!LABEL_KEYWORDS.contains(linkText.toLowerCase()) && linkText.length() > 2) {
                     title = linkText;
                     String href = link.attr("href");
-                    if (href.startsWith("/wiki/")) {
-                        wikipediaUrl = "https://en.wikipedia.org" + href;
-                        String pageTitle = href.replaceFirst("^.*/wiki/", "");
+                    int wikiIdx = href.indexOf("/wiki/");
+                    if (wikiIdx >= 0) {
+                        String pageTitle = href.substring(wikiIdx + "/wiki/".length());
                         if (pageTitle.contains("#")) pageTitle = pageTitle.substring(0, pageTitle.indexOf('#'));
+                        pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
+                        wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
                         wikidataId = getWikidataIdFromPageTitle(pageTitle);
                     }
                 }
@@ -443,9 +474,56 @@ public class AlbumWikipediaService {
             return null;
         }
 
+     // Look up Wikipedia URL and Wikidata ID from the raw HTML
+     // Look up Wikipedia URL and Wikidata ID from the raw HTML
+        if (wikipediaUrl == null && html != null && !html.isBlank()) {
+            Document liDoc = Jsoup.parse(html);
+
+            // Prefer a link inside an <i> tag (album titles are italicised)
+            Element link = liDoc.selectFirst("i a[href*=/wiki/]");
+            if (link == null) {
+                // Fallback: first wiki link, but skip obvious label/artist links
+                for (Element cand : liDoc.select("a[href*=/wiki/]")) {
+                    String text = cand.text().toLowerCase();
+                    if (LABEL_KEYWORDS.contains(text)) continue;
+                    link = cand;
+                    break;
+                }
+            }
+
+            if (link != null) {
+                String href = link.attr("href");
+
+                // href can be "/wiki/X" or "https://en.wikipedia.org/wiki/X"
+                String pageTitle = null;
+                int wikiIdx = href.indexOf("/wiki/");
+                if (wikiIdx >= 0) {
+                    pageTitle = href.substring(wikiIdx + "/wiki/".length());
+                }
+
+                if (pageTitle != null) {
+                    int hashIdx = pageTitle.indexOf('#');
+                    if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
+                    // URL-decode (Parsoid sometimes emits %27 etc.)
+                    pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
+
+                    wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
+                    wikidataId   = getWikidataIdFromPageTitle(pageTitle);
+                }
+            }
+        }
+        
+     // ---- Collect min/max year and override year / set released ----
+        int[] minMax = extractMinMaxYears(raw);
+        if (minMax != null) {
+            year     = String.valueOf(minMax[0]);   // earliest year
+            released = String.valueOf(minMax[1]);   // latest year
+        }
+        
         AlbumRawData data = new AlbumRawData();
         data.setTitle(title);
         data.setYear(year);
+        data.setReleased(released); 
         data.setLabel(label);   // extracted label (may be null)
         data.setWikidataId(wikidataId);
         data.setWikipediaUrl(wikipediaUrl);
@@ -454,9 +532,10 @@ public class AlbumWikipediaService {
 
     // ---------- Parse list item ----------
     private AlbumRawData parseListItem(Element li, Artist artist) {
-        String raw = li.text().trim();
-        if (raw.isEmpty()) return null;
-        AlbumRawData data = extractFromRaw(raw, artist);
+    	String raw = li.text().trim();
+    	if (raw.isEmpty()) return null;
+    	String html = li.html();                       // <-- new
+    	AlbumRawData data = extractFromRaw(raw, html, artist);
         if (data != null) {
             logger.debug("Parsed list item: '{}' -> '{}' ({})", raw, data.getTitle(), data.getYear());
         } else {
@@ -467,9 +546,10 @@ public class AlbumWikipediaService {
 
     // ---------- Parse table cell ----------
     private AlbumRawData parseAlbumCell(Element cell, Artist artist) {
-        String raw = cell.text().trim();
-        if (raw.isEmpty()) return null;
-        AlbumRawData data = extractFromRaw(raw, artist);
+    	String raw = cell.text().trim();
+    	if (raw.isEmpty()) return null;
+    	String html = cell.html();                     // <-- new
+    	AlbumRawData data = extractFromRaw(raw, html, artist);
         if (data != null) {
             logger.debug("Parsed table cell: '{}' -> '{}' ({})", raw, data.getTitle(), data.getYear());
         } else {
@@ -498,7 +578,7 @@ public class AlbumWikipediaService {
                     String raw = li.text().trim();
                     if (raw.isEmpty() || isNonAlbumLine(raw)) continue;
                     if (raw.matches(".*\\b\\d{4}\\b.*") && !raw.matches("^\\d+\\.\\d+.*")) {
-                        AlbumRawData data = extractFromRaw(raw, artist);
+                    	AlbumRawData data = extractFromRaw(raw, li.html(), artist);
                         if (data != null) {
                             data.setMain(false);
                             albums.add(data);
@@ -543,8 +623,9 @@ public class AlbumWikipediaService {
 
     // ---------- Wikidata lookup ----------
     private String getWikidataIdFromPageTitle(String pageTitle) {
-        String url = "https://en.wikipedia.org/w/api.php?action=query&titles=" + pageTitle +
-                "&prop=pageprops&format=json";
+    	String encoded = URLEncoder.encode(pageTitle.replace('_', ' '), StandardCharsets.UTF_8);
+    	String url = "https://en.wikipedia.org/w/api.php?action=query&titles=" + encoded +
+    	        "&prop=pageprops&format=json";
         try {
             var response = restTemplate.getForEntity(url, Map.class);
             if (response.getStatusCode().is2xxSuccessful()) {
@@ -564,12 +645,47 @@ public class AlbumWikipediaService {
         }
         return null;
     }
+    
+    /**
+     * Scans the raw text and returns [minYear, maxYear] of all plausible 4-digit years,
+     * or null if none found. Skips years preceded by "recorded" or "rec.".
+     */
+    private int[] extractMinMaxYears(String raw) {
+        if (raw == null) return null;
+        Pattern p = Pattern.compile("\\b(19|20)\\d{2}\\b");
+        Matcher m = p.matcher(raw);
+        int min = Integer.MAX_VALUE;
+        int max = Integer.MIN_VALUE;
+        boolean found = false;
 
+        while (m.find()) {
+            int start = m.start();
+            String prefix = (start >= 7) ? raw.substring(start - 7, start).toLowerCase() : "";
+            if (prefix.contains("recorded") || prefix.contains("rec.")) continue;
+
+            int y = Integer.parseInt(m.group());
+            if (y < min) min = y;
+            if (y > max) max = y;
+            found = true;
+        }
+        return found ? new int[] { min, max } : null;
+    }
+
+    private int findYearColumnIndex(Element table) {
+        Elements headers = table.select("th");
+        for (int i = 0; i < headers.size(); i++) {
+            String h = headers.get(i).text().trim().toLowerCase();
+            if (h.equals("year") || h.contains("year")) return i;
+        }
+        return -1;
+    }
+    
     // ---------- Inner class ----------
     public static class AlbumRawData {
         private String title;
         private String year;
         private boolean isMain;
+        private String released;    
         private String label;          // NEW: extracted label
         private String wikidataId;
         private String wikipediaUrl;
@@ -591,5 +707,8 @@ public class AlbumWikipediaService {
 
         public String getWikipediaUrl() { return wikipediaUrl; }
         public void setWikipediaUrl(String wikipediaUrl) { this.wikipediaUrl = wikipediaUrl; }
+        
+        public String getReleased() { return released; }             // <-- ADD
+        public void setReleased(String released) { this.released = released; }  // <-- ADD
     }
 }
