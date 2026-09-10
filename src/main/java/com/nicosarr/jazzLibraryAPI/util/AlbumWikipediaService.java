@@ -40,6 +40,44 @@ public class AlbumWikipediaService {
         "foreword", "interview", "blog", "archive", "wayback",
         "journal", "editorial", "doi", "issn", "review", "obituary",        "bibliography", "references", "notes", "further reading"
     );
+    
+    private static final List<String> DISCOGRAPHY_HEADING_KEYWORDS = List.of(
+    	    "discography", "album", "single", "compilation", "promo"
+    	);
+
+    	/** Determine release_type from a section heading. Order matters! */
+    private String determineReleaseType(String headingText) {
+        if (headingText == null) return null;
+        String h = headingText.toLowerCase(Locale.ROOT).trim();
+        if (h.contains("compilation")) return "compilation";
+        if (h.contains("promo"))       return "promo";
+        if (h.contains("single"))      return "single";
+        if (h.contains("album"))       return "album";
+        if (h.contains("discography")) return "album";
+        if (h.contains("leader") || h.contains("sideman")) return "album";  // NEW
+        return null;
+    }
+
+    	/** Is this heading about releases we should scan at all? */
+    	private boolean isReleaseHeading(String headingText) {
+    	    if (headingText == null) return false;
+    	    String h = headingText.toLowerCase(Locale.ROOT).trim();
+    	    if (h.contains("as leader") || h.contains("as sideman")
+    	            || h.contains("as guest")
+    	            || h.equals("leader") || h.equals("sideman")) {
+    	        return true;
+    	    }
+    	    return DISCOGRAPHY_HEADING_KEYWORDS.stream().anyMatch(h::contains);
+    	}
+
+    	/** Is this the artist's own main album section? */
+    	private boolean isMainReleaseSection(String headingText) {
+    	    String h = headingText.toLowerCase(Locale.ROOT);
+    	    if (h.contains("sideman") || h.contains("as guest")) return false;
+    	    if (h.contains("single") || h.contains("compilation") || h.contains("promo")) return false;
+    	    return h.contains("discography") || h.contains("album") || h.contains("leader");
+    	}
+
 
     // ---------- Public entry point ----------
     public List<AlbumRawData> fetchDiscography(Artist artist) {
@@ -130,105 +168,90 @@ public class AlbumWikipediaService {
     // ---------- Parse discography sections ----------
     private List<AlbumRawData> parseDiscographySections(Document doc, Artist artist) {
         List<AlbumRawData> albums = new ArrayList<>();
-        Elements headings = doc.select("h2, h3");
+        Elements headings = doc.select("h2, h3, h4");
         logger.debug("Found {} headings to scan for discography.", headings.size());
 
         for (Element heading : headings) {
-            String headingText = heading.text().toLowerCase().trim();
-            if (!headingText.contains("discography") && !headingText.contains("albums")) {
+            String headingText = heading.text().toLowerCase(Locale.ROOT).trim();
+
+            if (!isReleaseHeading(headingText)) continue;
+
+            String releaseType = determineReleaseType(headingText);
+            boolean isMain      = isMainReleaseSection(headingText);
+
+            // ---- Skip singles and promos entirely ----
+            if ("single".equals(releaseType) || "promo".equals(releaseType)) {
+                logger.debug("Skipping section '{}' (releaseType={})", heading.text(), releaseType);
                 continue;
             }
 
-            logger.debug("Found discography section: '{}'", heading.text());
-
-            boolean isMain = headingText.contains("studio")
-                    || headingText.contains("as leader")
-                    || headingText.contains("as sole leader")
-                    || headingText.contains("albums");
-            if (!isMain && !headingText.contains("live")
-                    && !headingText.contains("compilation")
-                    && !headingText.contains("sideman")) {
-                isMain = true;
-            }
-            logger.debug("Heading '{}' -> isMain={}", heading.text(), isMain);
+            logger.debug("Section '{}' -> releaseType={} isMain={}",
+                         heading.text(), releaseType, isMain);
 
             Element sectionContent = getSectionContent(heading);
-            if (sectionContent == null) {
-                logger.debug("No content found for heading: {}", heading.text());
-                continue;
-            }
+            if (sectionContent == null) continue;
 
-            // --- Parse unordered lists ---
+            // ---- ULs ----
             for (Element ul : sectionContent.select("ul")) {
                 for (Element li : ul.select("li")) {
                     AlbumRawData data = parseListItem(li, artist);
                     if (data != null) {
                         data.setMain(isMain);
+                        data.setReleaseType(releaseType);
                         albums.add(data);
-                        logger.debug("Added album from list: '{}' (year={})", data.getTitle(), data.getYear());
+                        logger.debug("Added from list: '{}' (year={}, type={})",
+                                     data.getTitle(), data.getYear(), releaseType);
                     }
                 }
             }
 
-            // --- Parse tables ---
+            // ---- Tables ----
             for (Element table : sectionContent.select("table.wikitable")) {
                 int titleColumnIndex = findTitleColumnIndex(table);
-                if (titleColumnIndex == -1) {
-                    titleColumnIndex = findColumnWithLinks(table);
-                }
-                if (titleColumnIndex == -1) {
-                    titleColumnIndex = 0;
-                }
-                
-                int yearColumnIndex = findYearColumnIndex(table); 
+                if (titleColumnIndex == -1) titleColumnIndex = findColumnWithLinks(table);
+                if (titleColumnIndex == -1) titleColumnIndex = 0;
+
+                int yearColumnIndex = findYearColumnIndex(table);
 
                 for (Element row : table.select("tr")) {
-                    if (row.select("th").isEmpty()) {
-                        // Skip metadata rows
-                        boolean isMetadataRow = false;
-                        for (Element cell : row.select("td")) {
-                            String cellText = cell.text().trim().toLowerCase();
-                            if (cellText.matches("^(label|released|recorded|riaa|format)\\s*[:.]?.*")) {
-                                isMetadataRow = true;
-                                break;
-                            }
-                        }
-                        if (isMetadataRow) {
-                            continue;
-                        }
+                    if (!row.select("th").isEmpty()) continue;
 
-                        Elements cells = row.select("td");
-                        if (cells.size() > titleColumnIndex) {
-                            Element titleCell = cells.get(titleColumnIndex);
-                            
-                            // NEW: if the title cell has no year, try the year column
-                            String raw = titleCell.text().trim();
-                            if (yearColumnIndex != -1 && cells.size() > yearColumnIndex
-                                    && !raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
-                                String y = cells.get(yearColumnIndex).text().trim();
-                                if (y.matches(".*\\b(19|20)\\d{2}\\b.*")) {
-                                    raw = y + ": " + raw;      // synthesise "1955: Ahmad Jamal Plays"
-                                }
-                            }
-                            
-                            if (!raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
-                                for (Element c : cells) {
-                                    String t = c.text().trim();
-                                    if (t.matches("\\s*(19|20)\\d{2}\\s*")) {
-                                        raw = t + ": " + raw;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            AlbumRawData data = extractFromRaw(raw, titleCell.html(), artist);
-                            if (data != null) {
-                                data.setMain(isMain);
-                                albums.add(data);
-                                logger.debug("Added album from table: '{}' (year={})",
-                                             data.getTitle(), data.getYear());
-                            }                           
+                    // skip metadata rows (same check as before)
+                    boolean metadata = false;
+                    for (Element cell : row.select("td")) {
+                        String t = cell.text().trim().toLowerCase(Locale.ROOT);
+                        if (t.matches("^(label|released|recorded|riaa|format)\\s*[:.]?.*")) {
+                            metadata = true; break;
                         }
+                    }
+                    if (metadata) continue;
+
+                    Elements cells = row.select("td");
+                    if (cells.size() <= titleColumnIndex) continue;
+
+                    Element titleCell = cells.get(titleColumnIndex);
+                    String raw = titleCell.text().trim();
+
+                    // (unchanged) borrow year from the year column if the title cell lacks it
+                    if (yearColumnIndex != -1 && cells.size() > yearColumnIndex
+                            && !raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
+                        String y = cells.get(yearColumnIndex).text().trim();
+                        if (y.matches(".*\\b(19|20)\\d{2}\\b.*")) raw = y + ": " + raw;
+                    }
+                    if (!raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
+                        for (Element c : cells) {
+                            String t = c.text().trim();
+                            if (t.matches("\\s*(19|20)\\d{2}\\s*")) { raw = t + ": " + raw; break; }
+                        }
+                    }
+
+                    AlbumRawData data = extractFromRaw(raw, titleCell.html(), artist);
+                    if (data != null) {
+                        data.setMain(isMain);
+                        data.setReleaseType(releaseType);
+                        albums.add(data);
+                        logger.debug("Added from table: '{}' (year={}, type={})",
+                                     data.getTitle(), data.getYear(), releaseType);
                     }
                 }
             }
@@ -239,34 +262,39 @@ public class AlbumWikipediaService {
     // ---------- Get the content block following a heading ----------
     private Element getSectionContent(Element heading) {
         Element container = heading.parent();
-        Element startFrom;
-        if (container != null && container.tagName().equals("div") && container.hasClass("mw-heading")) {
-            startFrom = container.nextElementSibling();
-        } else {
-            startFrom = heading.nextElementSibling();
-        }
+        Element startFrom = (container != null && container.tagName().equals("div")
+                             && container.hasClass("mw-heading"))
+                ? container.nextElementSibling()
+                : heading.nextElementSibling();
 
-        if (startFrom == null) {
-            return null;
-        }
+        if (startFrom == null) return null;
 
         int headingLevel = Integer.parseInt(heading.tagName().substring(1));
         Element section = new Element("div");
         Element current = startFrom;
 
         while (current != null) {
-            if (current.tagName().matches("h[23]")) {
-                int nextLevel = Integer.parseInt(current.tagName().substring(1));
-                if (nextLevel <= headingLevel) {
-                    break;
+            // (A) Parsoid: a nested <section> sibling is a sub-section.
+            //     Its content belongs to another heading and will be parsed there.
+            if ("section".equals(current.tagName())) {
+                break;
+            }
+
+            // (B) Legacy / non-Parsoid HTML: raw heading tags.
+            if (current.tagName().matches("h[2-6]")) {
+                String text = current.text();
+                if (isReleaseHeading(text)) break;
+                if (current.tagName().matches("h[23]")) {
+                    int nextLevel = Integer.parseInt(current.tagName().substring(1));
+                    if (nextLevel <= headingLevel) break;
                 }
             }
+
             section.appendChild(current.clone());
             current = current.nextElementSibling();
         }
         return section;
     }
-
     // ---------- Table column detection ----------
     private int findTitleColumnIndex(Element table) {
         Elements headers = table.select("th");
@@ -328,6 +356,7 @@ public class AlbumWikipediaService {
         String released = null;      
         String wikidataId = null;
         String wikipediaUrl = null;
+        String rawWikipediaUrl = null;
 
         // ---- Step 1: Find parenthetical groups that contain a year ----
         Pattern parenGroup = Pattern.compile("\\(([^)]*)\\)");
@@ -476,39 +505,58 @@ public class AlbumWikipediaService {
 
      // Look up Wikipedia URL and Wikidata ID from the raw HTML
      // Look up Wikipedia URL and Wikidata ID from the raw HTML
-        if (wikipediaUrl == null && html != null && !html.isBlank()) {
+        if (html != null && !html.isBlank()) {
             Document liDoc = Jsoup.parse(html);
 
-            // Prefer a link inside an <i> tag (album titles are italicised)
-            Element link = liDoc.selectFirst("i a[href*=/wiki/]");
-            if (link == null) {
-                // Fallback: first wiki link, but skip obvious label/artist links
-                for (Element cand : liDoc.select("a[href*=/wiki/]")) {
-                    String text = cand.text().toLowerCase();
-                    if (LABEL_KEYWORDS.contains(text)) continue;
-                    link = cand;
-                    break;
-                }
+            // ---- (a) Collect ALL distinct wiki links in this list item / cell ----
+            LinkedHashSet<String> allUrls = new LinkedHashSet<>();
+            for (Element a : liDoc.select("a[href*=/wiki/]")) {
+                String href = a.attr("href");
+                int wikiIdx = href.indexOf("/wiki/");
+                if (wikiIdx < 0) continue;
+
+                String pageTitle = href.substring(wikiIdx + "/wiki/".length());
+                int hashIdx = pageTitle.indexOf('#');
+                if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
+                pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
+
+                allUrls.add("https://en.wikipedia.org/wiki/" + pageTitle);
+            }
+            if (!allUrls.isEmpty()) {
+                rawWikipediaUrl = allUrls.stream()
+                        .map(u -> "\"" + u.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+                        .collect(java.util.stream.Collectors.joining(",", "[", "]"));
             }
 
-            if (link != null) {
-                String href = link.attr("href");
+            // ---- (b) Pick the *real* album URL: only from the first <i> ----
+            if (wikipediaUrl == null) {
+                Element firstItalic = liDoc.selectFirst("i");
+                Element link = (firstItalic != null)
+                        ? firstItalic.selectFirst("a[href*=/wiki/]")
+                        : null;
 
-                // href can be "/wiki/X" or "https://en.wikipedia.org/wiki/X"
-                String pageTitle = null;
-                int wikiIdx = href.indexOf("/wiki/");
-                if (wikiIdx >= 0) {
-                    pageTitle = href.substring(wikiIdx + "/wiki/".length());
+                // belt-and-braces: the link text must appear in the parsed title
+                if (link != null) {
+                    String linkText = link.text().trim();
+                    if (linkText.isEmpty()
+                            || title == null
+                            || !title.toLowerCase().contains(linkText.toLowerCase())) {
+                        link = null;
+                    }
                 }
 
-                if (pageTitle != null) {
-                    int hashIdx = pageTitle.indexOf('#');
-                    if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
-                    // URL-decode (Parsoid sometimes emits %27 etc.)
-                    pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
+                if (link != null) {
+                    String href = link.attr("href");
+                    int wikiIdx = href.indexOf("/wiki/");
+                    if (wikiIdx >= 0) {
+                        String pageTitle = href.substring(wikiIdx + "/wiki/".length());
+                        int hashIdx = pageTitle.indexOf('#');
+                        if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
+                        pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
 
-                    wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
-                    wikidataId   = getWikidataIdFromPageTitle(pageTitle);
+                        wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
+                        wikidataId   = getWikidataIdFromPageTitle(pageTitle);
+                    }
                 }
             }
         }
@@ -527,6 +575,7 @@ public class AlbumWikipediaService {
         data.setLabel(label);   // extracted label (may be null)
         data.setWikidataId(wikidataId);
         data.setWikipediaUrl(wikipediaUrl);
+        data.setRawWikipediaUrl(rawWikipediaUrl);  
         return data;
     }
 
@@ -689,6 +738,8 @@ public class AlbumWikipediaService {
         private String label;          // NEW: extracted label
         private String wikidataId;
         private String wikipediaUrl;
+        private String rawWikipediaUrl; 
+        private String releaseType;
 
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
@@ -708,7 +759,13 @@ public class AlbumWikipediaService {
         public String getWikipediaUrl() { return wikipediaUrl; }
         public void setWikipediaUrl(String wikipediaUrl) { this.wikipediaUrl = wikipediaUrl; }
         
-        public String getReleased() { return released; }             // <-- ADD
-        public void setReleased(String released) { this.released = released; }  // <-- ADD
-    }
+        public String getReleased() { return released; }            
+        public void setReleased(String released) { this.released = released; }  
+        
+        public String getRawWikipediaUrl() { return rawWikipediaUrl; }
+        public void setRawWikipediaUrl(String rawWikipediaUrl) { this.rawWikipediaUrl = rawWikipediaUrl; }
+        
+        public String getReleaseType() { return releaseType; }
+        public void setReleaseType(String releaseType) { this.releaseType = releaseType; }
+        }
 }

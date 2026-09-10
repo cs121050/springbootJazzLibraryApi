@@ -46,7 +46,7 @@ public class Album {
 	@Column(name = "wikipedia_url")
 	private String wikipedia_url;
 	
-	@Column(name = "raw_wikipedia_url")
+	@Column(name = "raw_wikipedia_url", columnDefinition = "TEXT")
 	private String raw_wikipedia_url;
 	
 	@Column(name = "wikidata_id")
