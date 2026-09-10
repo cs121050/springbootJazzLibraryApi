@@ -112,8 +112,10 @@ public class AlbumImportService {
         if (raw.getYear() != null) {
             album.setYear(Integer.parseInt(raw.getYear()));
         }
+        album.setReleased(raw.getReleased());
         album.setWikidata_id(raw.getWikidataId());
         album.setRelease_id(null); // will be filled later
+        album.setWikipedia_url(raw.getWikipediaUrl());   // <-- new
         album.setLabels(raw.getLabel());
         return album;
     }
