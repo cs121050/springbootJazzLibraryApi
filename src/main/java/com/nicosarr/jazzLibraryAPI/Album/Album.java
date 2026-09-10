@@ -46,6 +46,9 @@ public class Album {
 	@Column(name = "wikipedia_url")
 	private String wikipedia_url;
 	
+	@Column(name = "raw_wikipedia_url")
+	private String raw_wikipedia_url;
+	
 	@Column(name = "wikidata_id")
 	private String wikidata_id;
 
@@ -82,6 +85,8 @@ public class Album {
 	
     @Column(name = "musicbrainz_uuid")    
     private String musicbrainz_uuid; 
+    
+    
 
 	// One-to-many relationship with the junction table
 	@OneToMany(mappedBy = "album", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -100,7 +105,8 @@ public class Album {
 			String released_formatted, String release_type, String date_added, String date_changed, String title,
 			String wikipedia_url, String coverartarchive_thumb, String companies, String extra_artists, String genres,
 			String images, String labels, String styles, String tracklist, String videos,
-			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data, String musicbrainz_uuid, String wikidata_id) {
+			List<AlbumContainsArtist> albumContainsArtists, String wikipedia_data, String musicbrainz_uuid, String wikidata_id,
+			String raw_wikipedia_url) {
 		this.album_id = album_id;
 		this.release_id = release_id;
 		this.master_id = master_id;
@@ -129,6 +135,7 @@ public class Album {
 		this.wikipedia_data = wikipedia_data;
 		this.musicbrainz_uuid = musicbrainz_uuid;
 		this.wikidata_id = wikidata_id;
+		this.raw_wikipedia_url = raw_wikipedia_url;
 		
 	}
 
@@ -367,6 +374,16 @@ public class Album {
 	public void setWikipedia_data(String wikipedia_data) {
 		this.wikipedia_data = wikipedia_data;
 	}
+
+	public String getRaw_wikipedia_url() {
+		return raw_wikipedia_url;
+	}
+
+	public void setRaw_wikipedia_url(String raw_wikipedia_url) {
+		this.raw_wikipedia_url = raw_wikipedia_url;
+	}
+	
+	
 	
 	
 }
