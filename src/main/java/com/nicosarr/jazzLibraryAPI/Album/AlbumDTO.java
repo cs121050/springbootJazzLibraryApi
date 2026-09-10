@@ -17,6 +17,7 @@ public class AlbumDTO {
     private String date_changed;
     private String title;
     private String wikipedia_url;
+    private String raw_wikipedia_url;
     private String coverartarchive_thumb;
 
     // JSON fields (as raw strings – you can parse them later)
@@ -40,7 +41,7 @@ public class AlbumDTO {
                     String date_changed, String title, String wikipedia_url, String coverartarchive_thumb,
                     String companies, String extra_artists, String genres, String images, String labels,
                     String styles, String tracklist, String videos, String wikipedia_data, 
-                    String musicbrainz_uuid, String wikidata_id) {
+                    String musicbrainz_uuid, String wikidata_id, String raw_wikipedia_url) {
         this.album_id = album_id;
         this.release_id = release_id;
         this.master_id = master_id;
@@ -68,6 +69,7 @@ public class AlbumDTO {
         this.wikipedia_data = wikipedia_data;
         this.musicbrainz_uuid = musicbrainz_uuid;
         this.wikidata_id = wikidata_id;
+        this.raw_wikipedia_url = raw_wikipedia_url;
     }
 
     // Factory method to convert from entity
@@ -100,6 +102,7 @@ public class AlbumDTO {
         dto.setWikipedia_data(album.getWikipedia_data());
         dto.setMusicbrainz_uuid(album.getMusicbrainz_uuid());
         dto.setWikidata_id(album.getWikidata_id());
+        dto.setRaw_wikipedia_url(album.getRaw_wikipedia_url());
         return dto;
     }
 
@@ -193,5 +196,15 @@ public class AlbumDTO {
 	public void setWikidata_id(String wikidata_id) {
 	    this.wikidata_id = wikidata_id;
 	}
+
+	public String getRaw_wikipedia_url() {
+		return raw_wikipedia_url;
+	}
+
+	public void setRaw_wikipedia_url(String raw_wikipedia_url) {
+		this.raw_wikipedia_url = raw_wikipedia_url;
+	}
+	
+
     
 }
