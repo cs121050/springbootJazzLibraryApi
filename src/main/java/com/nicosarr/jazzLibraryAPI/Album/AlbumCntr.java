@@ -38,7 +38,7 @@ public class AlbumCntr {
         return rep.retrieveAllWithArtists();
     }
 
-    @PostMapping("/importDiscographies")
+    @PostMapping("/importDiscographiesPart1")
     public ResponseEntity<String> importDiscographies(@RequestParam(required = false) Integer limit) {
         String jobId = jobManager.startJob((jobContext) -> {
             String result = rep.processAllAlbumsFromArtists(jobContext, limit);

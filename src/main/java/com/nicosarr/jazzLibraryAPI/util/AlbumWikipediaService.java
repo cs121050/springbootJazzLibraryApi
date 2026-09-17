@@ -12,6 +12,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import org.springframework.web.util.UriComponentsBuilder;
+import java.net.URI;
 
 import java.io.IOException;
 import java.util.*;
@@ -25,6 +27,12 @@ public class AlbumWikipediaService {
 
     @Autowired
     private RestTemplate restTemplate;
+    
+    /**
+     * Remembers, per unique Wikipedia URL, whether its page is an album.
+     * Prevents the same URL being queried twice across the whole import.
+     */
+    private final Map<String, Boolean> albumPageCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     private static final Set<String> LABEL_KEYWORDS = Set.of(
         "ecm", "blue note", "impulse", "verve", "prestige", "atlantic",
@@ -216,32 +224,40 @@ public class AlbumWikipediaService {
                 for (Element row : table.select("tr")) {
                     if (!row.select("th").isEmpty()) continue;
 
-                    // skip metadata rows (same check as before)
-                    boolean metadata = false;
-                    for (Element cell : row.select("td")) {
-                        String t = cell.text().trim().toLowerCase(Locale.ROOT);
-                        if (t.matches("^(label|released|recorded|riaa|format)\\s*[:.]?.*")) {
-                            metadata = true; break;
-                        }
-                    }
-                    if (metadata) continue;
-
                     Elements cells = row.select("td");
                     if (cells.size() <= titleColumnIndex) continue;
+
+                    // Skip metadata rows: only the FIRST cell counts, and only if it's
+                    // a short "Label: ..." / "Released: ..." style cell.
+                    String firstCell = cells.first().text().trim().toLowerCase(Locale.ROOT);
+                    boolean looksLikeMetadata =
+                            firstCell.split("\\s+").length <= 2
+                            && firstCell.matches("^(label|released|recorded|riaa|format)\\s*[:.]?.*");
+                    if (looksLikeMetadata) continue;
 
                     Element titleCell = cells.get(titleColumnIndex);
                     String raw = titleCell.text().trim();
 
-                    // (unchanged) borrow year from the year column if the title cell lacks it
+                    // Borrow a clean 4-digit year from the year column if the title
+                    // cell doesn't already contain one. This must strip trailing "*",
+                    // "(released)" etc. — otherwise the leading "YYYY*:" pattern
+                    // breaks the extractFromRaw regex.
                     if (yearColumnIndex != -1 && cells.size() > yearColumnIndex
                             && !raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
                         String y = cells.get(yearColumnIndex).text().trim();
-                        if (y.matches(".*\\b(19|20)\\d{2}\\b.*")) raw = y + ": " + raw;
+                        Matcher ym = Pattern.compile("\\b(19|20)\\d{2}\\b").matcher(y);
+                        if (ym.find()) raw = ym.group() + ": " + raw;
                     }
                     if (!raw.matches(".*\\b(19|20)\\d{2}\\b.*")) {
                         for (Element c : cells) {
                             String t = c.text().trim();
-                            if (t.matches("\\s*(19|20)\\d{2}\\s*")) { raw = t + ": " + raw; break; }
+                            Matcher ym = Pattern.compile("\\b(19|20)\\d{2}\\b").matcher(t);
+                            // Only accept cells that are essentially just a year
+                            // (optionally with a trailing marker like "*" or "–97")
+                            if (ym.find() && t.replaceAll("[^0-9]", "").length() <= 4) {
+                                raw = ym.group() + ": " + raw;
+                                break;
+                            }
                         }
                     }
 
@@ -256,6 +272,63 @@ public class AlbumWikipediaService {
                 }
             }
         }
+
+        // ---- One batched filter for the whole page ----
+        Set<String> allCandidates = new LinkedHashSet<>();
+        for (AlbumRawData a : albums) {
+            if (a.getRawWikipediaUrlCandidates() != null) {
+                allCandidates.addAll(a.getRawWikipediaUrlCandidates());
+            }
+        }
+
+        if (!allCandidates.isEmpty()) {
+            Set<String> albumUrls = filterToAlbumPages(allCandidates);
+
+            for (AlbumRawData a : albums) {
+                Set<String> mine = a.getRawWikipediaUrlCandidates();
+                if (mine == null || mine.isEmpty()) continue;
+
+                List<String> keep = new ArrayList<>();
+                for (String u : mine) {
+                    if (albumUrls.contains(u)) keep.add(u);
+                }
+                if (keep.isEmpty()) continue;
+
+                a.setRawWikipediaUrl(keep.stream()
+                        .map(u -> "\"" + u.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+                        .collect(java.util.stream.Collectors.joining(",", "[", "]")));
+            }
+        }
+
+     // ---- Batched Wikidata lookup for all album pages on this page ----
+        Set<String> titlesToLookup = new LinkedHashSet<>();
+        Map<AlbumRawData, String> albumToTitle = new HashMap<>();
+
+        for (AlbumRawData a : albums) {
+            String u = a.getWikipediaUrl();
+            if (u == null) continue;
+            int idx = u.indexOf("/wiki/");
+            if (idx < 0) continue;
+            String t = java.net.URLDecoder.decode(u.substring(idx + 6), StandardCharsets.UTF_8)
+                                           .replace('_', ' ');
+            titlesToLookup.add(t);
+            albumToTitle.put(a, t);
+        }
+
+        if (!titlesToLookup.isEmpty()) {
+            Map<String, String> idByTitle = lookupWikidataIds(titlesToLookup);
+            int hits = 0;
+            for (Map.Entry<AlbumRawData, String> e : albumToTitle.entrySet()) {
+                String qid = idByTitle.get(e.getValue());
+                if (qid != null) {
+                    e.getKey().setWikidataId(qid);
+                    hits++;
+                }
+            }
+            logger.debug("Wikidata lookup: {} of {} albums got a Q-id",
+                         hits, albumToTitle.size());
+        }
+        
         return albums;
     }
 
@@ -356,8 +429,11 @@ public class AlbumWikipediaService {
         String released = null;      
         String wikidataId = null;
         String wikipediaUrl = null;
+        Set<String> rawWikipediaCandidates = null;
         String rawWikipediaUrl = null;
 
+        
+        
         // ---- Step 1: Find parenthetical groups that contain a year ----
         Pattern parenGroup = Pattern.compile("\\(([^)]*)\\)");
         Matcher pm = parenGroup.matcher(raw);
@@ -487,7 +563,7 @@ public class AlbumWikipediaService {
                         if (pageTitle.contains("#")) pageTitle = pageTitle.substring(0, pageTitle.indexOf('#'));
                         pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
                         wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
-                        wikidataId = getWikidataIdFromPageTitle(pageTitle);
+                        
                     }
                 }
             }
@@ -499,7 +575,7 @@ public class AlbumWikipediaService {
         }
 
         // ---- Final plausibility ----
-        if (title == null || title.length() < 3 || !isPlausibleTitle(title, false)) {
+        if (title == null || !isPlausibleTitle(title, false)) {
             return null;
         }
 
@@ -511,6 +587,8 @@ public class AlbumWikipediaService {
             // ---- (a) Collect ALL distinct wiki links in this list item / cell ----
             LinkedHashSet<String> allUrls = new LinkedHashSet<>();
             for (Element a : liDoc.select("a[href*=/wiki/]")) {
+            	if (a.hasClass("new")) continue;
+            	
                 String href = a.attr("href");
                 int wikiIdx = href.indexOf("/wiki/");
                 if (wikiIdx < 0) continue;
@@ -522,26 +600,29 @@ public class AlbumWikipediaService {
 
                 allUrls.add("https://en.wikipedia.org/wiki/" + pageTitle);
             }
+            
             if (!allUrls.isEmpty()) {
-                rawWikipediaUrl = allUrls.stream()
-                        .map(u -> "\"" + u.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
-                        .collect(java.util.stream.Collectors.joining(",", "[", "]"));
+            	rawWikipediaCandidates = allUrls;     // temp, not persisted
             }
 
             // ---- (b) Pick the *real* album URL: only from the first <i> ----
             if (wikipediaUrl == null) {
                 Element firstItalic = liDoc.selectFirst("i");
                 Element link = (firstItalic != null)
-                        ? firstItalic.selectFirst("a[href*=/wiki/]")
+                		? firstItalic.selectFirst("a[href*=/wiki/]:not(.new)") 
                         : null;
 
                 // belt-and-braces: the link text must appear in the parsed title
                 if (link != null) {
                     String linkText = link.text().trim();
-                    if (linkText.isEmpty()
-                            || title == null
-                            || !title.toLowerCase().contains(linkText.toLowerCase())) {
+                    if (linkText.isEmpty() || title == null) {
                         link = null;
+                    } else {
+                        String lt = title.toLowerCase(Locale.ROOT);
+                        String lk = linkText.toLowerCase(Locale.ROOT);
+                        if (!lt.contains(lk) && !lk.contains(lt)) {
+                            link = null;
+                        }
                     }
                 }
 
@@ -555,7 +636,7 @@ public class AlbumWikipediaService {
                         pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
 
                         wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
-                        wikidataId   = getWikidataIdFromPageTitle(pageTitle);
+                       
                     }
                 }
             }
@@ -576,8 +657,10 @@ public class AlbumWikipediaService {
         data.setWikidataId(wikidataId);
         data.setWikipediaUrl(wikipediaUrl);
         data.setRawWikipediaUrl(rawWikipediaUrl);  
+        data.setRawWikipediaUrlCandidates(rawWikipediaCandidates);
         return data;
     }
+        
 
     // ---------- Parse list item ----------
     private AlbumRawData parseListItem(Element li, Artist artist) {
@@ -663,38 +746,154 @@ public class AlbumWikipediaService {
     // ---------- Plausibility (lenient) ----------
     private boolean isPlausibleTitle(String title, boolean fromLink) {
         if (title == null || title.isBlank()) return false;
-        if (title.length() < 3) return false;
         if (title.matches("\\d{4}")) return false;
-        if (LABEL_KEYWORDS.contains(title.toLowerCase())) return false;
-        if (title.replaceAll("[^a-zA-Z0-9]", "").isEmpty()) return false;
-        return true;
+
+     // Short titles are only OK if they contain a digit or roman numeral
+     String cleaned = title.replaceAll("[^a-zA-Z0-9]", "");
+     if (cleaned.length() < 3) {
+         boolean looksLikeAlbumNumber = title.matches("(?i)[ivxlcdm]+")     // roman numerals
+                                     || title.matches("\\d{1,3}");          // 1-3 digit number
+         if (!looksLikeAlbumNumber) return false;
+     }
+
+     if (LABEL_KEYWORDS.contains(title.toLowerCase())) return false;
+     if (cleaned.isEmpty()) return false;
+     return true;
     }
 
-    // ---------- Wikidata lookup ----------
-    private String getWikidataIdFromPageTitle(String pageTitle) {
-    	String encoded = URLEncoder.encode(pageTitle.replace('_', ' '), StandardCharsets.UTF_8);
-    	String url = "https://en.wikipedia.org/w/api.php?action=query&titles=" + encoded +
-    	        "&prop=pageprops&format=json";
+    
+    
+    /**
+     * Given the full set of candidate URLs for one artist page, returns only the
+     * ones whose Wikipedia page is categorised as an album. Batches 50 per API call
+     * and memoises results across the whole import so no URL is ever queried twice.
+     */
+    private Set<String> filterToAlbumPages(Set<String> candidateUrls) {
+        if (candidateUrls == null || candidateUrls.isEmpty()) return new LinkedHashSet<>();
+
+        Set<String> albumUrls = new LinkedHashSet<>();
+        List<String> unknown   = new ArrayList<>();
+
+        // 1. Answer from cache where possible
+        for (String url : candidateUrls) {
+            Boolean cached = albumPageCache.get(url);
+            if (Boolean.TRUE.equals(cached)) {
+                albumUrls.add(url);
+            } else if (cached == null) {
+                unknown.add(url);
+            }
+        }
+
+        // 2. Batch the unknowns 50 at a time
+        for (int i = 0; i < unknown.size(); i += 50) {
+            List<String> batch = unknown.subList(i, Math.min(i + 50, unknown.size()));
+            Set<String> hits = checkBatchForAlbumCategories(batch);
+            for (String url : batch) {
+                boolean isAlbum = hits.contains(url);
+                albumPageCache.put(url, isAlbum);
+                if (isAlbum) albumUrls.add(url);
+            }
+        }
+
+     // at the end of filterToAlbumPages, after the caching loop
+        if (albumUrls.size() < candidateUrls.size()) {
+            Set<String> dropped = new LinkedHashSet<>(candidateUrls);
+            dropped.removeAll(albumUrls);
+            logger.debug("Filtered out: {}", dropped);
+        }
+        
+        logger.debug("Album URL filter: {} of {} candidates kept",
+                albumUrls.size(), candidateUrls.size());
+        return albumUrls;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> checkBatchForAlbumCategories(List<String> urls) {
+        Set<String> result = new LinkedHashSet<>();
+        Map<String, String> titleToUrl = new LinkedHashMap<>();
+        List<String> titles = new ArrayList<>();
+
+        for (String url : urls) {
+            int idx = url.indexOf("/wiki/");
+            if (idx < 0) continue;
+            String raw = url.substring(idx + "/wiki/".length());
+            int hashIdx = raw.indexOf('#');
+            if (hashIdx > 0) raw = raw.substring(0, hashIdx);
+            String decoded = java.net.URLDecoder.decode(raw, StandardCharsets.UTF_8);
+            String apiTitle = decoded.replace('_', ' ');
+            titles.add(apiTitle);
+            titleToUrl.put(apiTitle, url);
+        }
+        if (titles.isEmpty()) return result;
+
+        // ---- Build the URI correctly: DO NOT use URLEncoder here. ----
+        URI uri = UriComponentsBuilder
+                .fromHttpUrl("https://en.wikipedia.org/w/api.php")
+                .queryParam("action",  "query")
+                .queryParam("format",  "json")
+                .queryParam("prop",    "categories")
+                .queryParam("cllimit", "500")
+                .queryParam("redirects", "1")
+                .queryParam("titles",  String.join("|", titles))
+                .build()
+                .encode(StandardCharsets.UTF_8)   // <- encodes once, correctly
+                .toUri();
+
+        logger.trace("Calling Wikipedia API: {}", uri);
+
         try {
-            var response = restTemplate.getForEntity(url, Map.class);
-            if (response.getStatusCode().is2xxSuccessful()) {
-                Map<String, Object> body = response.getBody();
-                Map<String, Object> query = (Map<String, Object>) body.get("query");
-                Map<String, Object> pages = (Map<String, Object>) query.get("pages");
-                for (Object pageObj : pages.values()) {
-                    Map<String, Object> page = (Map<String, Object>) pageObj;
-                    Map<String, Object> pageprops = (Map<String, Object>) page.get("pageprops");
-                    if (pageprops != null && pageprops.containsKey("wikibase_item")) {
-                        return (String) pageprops.get("wikibase_item");
+        	var response = callWithRetry(uri, Map.class);   // retries on 429
+            if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return result;
+
+            Map<String, Object> body  = response.getBody();
+            Map<String, Object> query = (Map<String, Object>) body.get("query");
+            if (query == null) return result;
+
+            // Track redirects / normalisation so we can find our original URL back
+            Map<String, String> finalToOriginal = new HashMap<>();
+            for (String key : new String[] { "redirects", "normalized" }) {
+                List<Map<String, Object>> arr = (List<Map<String, Object>>) query.get(key);
+                if (arr != null) {
+                    for (Map<String, Object> m : arr) {
+                        String from = (String) m.get("from");
+                        String to   = (String) m.get("to");
+                        if (from != null && to != null) finalToOriginal.put(to, from);
+                    }
+                }
+            }
+
+            Map<String, Object> pages = (Map<String, Object>) query.get("pages");
+            if (pages == null) return result;
+
+            for (Object pageObj : pages.values()) {
+                Map<String, Object> page = (Map<String, Object>) pageObj;
+                if (page.containsKey("missing")) continue;
+
+                String pageTitle = (String) page.get("title");
+                if (pageTitle == null) continue;
+
+                String originalTitle = finalToOriginal.getOrDefault(pageTitle, pageTitle);
+                String url = titleToUrl.get(originalTitle);
+                if (url == null) url = titleToUrl.get(pageTitle);
+                if (url == null) continue;
+
+                List<Map<String, Object>> cats = (List<Map<String, Object>>) page.get("categories");
+                if (cats == null) continue;
+
+                for (Map<String, Object> cat : cats) {
+                    String catTitle = (String) cat.get("title");
+                    if (catTitle == null) continue;
+                    if (catTitle.toLowerCase(Locale.ROOT).endsWith(" albums")) {
+                        result.add(url);
+                        break;
                     }
                 }
             }
         } catch (Exception e) {
-            logger.trace("Failed to get Wikidata ID for '{}'", pageTitle, e);
+            logger.warn("Category API call failed for batch of {}: {}", urls.size(), e.getMessage());
         }
-        return null;
+        return result;
     }
-    
     /**
      * Scans the raw text and returns [minYear, maxYear] of all plausible 4-digit years,
      * or null if none found. Skips years preceded by "recorded" or "rec.".
@@ -720,6 +919,107 @@ public class AlbumWikipediaService {
         return found ? new int[] { min, max } : null;
     }
 
+    /**
+     * Wraps a GET call with retry-on-429 using exponential backoff.
+     * Sleeps 1s, 3s, 8s, then 20s between attempts.
+     */
+    private <T> org.springframework.http.ResponseEntity<T> callWithRetry(URI uri, Class<T> type) {
+        long[] backoffMs = { 1000, 3000, 8000, 20000 };
+        for (int attempt = 0; attempt <= backoffMs.length; attempt++) {
+            try {
+                var resp = restTemplate.getForEntity(uri, type);
+                int status = resp.getStatusCode().value();
+                if (status != 429) return resp;
+
+                if (attempt == backoffMs.length) return resp; // out of retries
+                logger.warn("Wikipedia 429 (attempt {}), sleeping {} ms...",
+                            attempt + 1, backoffMs[attempt]);
+                Thread.sleep(backoffMs[attempt]);
+
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted during 429 backoff", ie);
+            } catch (Exception e) {
+                if (attempt == backoffMs.length) throw new RuntimeException(e);
+                try { Thread.sleep(backoffMs[attempt]); } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
+            }
+        }
+        throw new IllegalStateException("unreachable");
+    }
+    
+    /**
+     * Batch lookup of wikibase_item (Q-id) for up to 50 page titles per call.
+     * Returns a map keyed by BOTH the original title and the canonical/redirected title.
+     */
+    @SuppressWarnings("unchecked")
+    private Map<String, String> lookupWikidataIds(Set<String> pageTitles) {
+        Map<String, String> result = new HashMap<>();
+        if (pageTitles == null || pageTitles.isEmpty()) return result;
+
+        List<String> list = new ArrayList<>(pageTitles);
+
+        for (int i = 0; i < list.size(); i += 50) {
+            List<String> batch = list.subList(i, Math.min(i + 50, list.size()));
+
+            URI uri = UriComponentsBuilder
+                    .fromHttpUrl("https://en.wikipedia.org/w/api.php")
+                    .queryParam("action",    "query")
+                    .queryParam("format",    "json")
+                    .queryParam("prop",      "pageprops")
+                    .queryParam("ppprop",    "wikibase_item")
+                    .queryParam("redirects", "1")
+                    .queryParam("titles",    String.join("|", batch))
+                    .build().encode(StandardCharsets.UTF_8).toUri();
+
+            logger.trace("Wikidata batch ({} titles): {}", batch.size(), uri);
+
+            try {
+                var response = callWithRetry(uri, Map.class);
+                if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) continue;
+
+                Map<String, Object> body  = response.getBody();
+                Map<String, Object> query = (Map<String, Object>) body.get("query");
+                if (query == null) continue;
+
+                // Map canonical/redirected title back to what we asked for
+                Map<String, String> finalToOriginal = new HashMap<>();
+                for (String key : new String[] { "redirects", "normalized" }) {
+                    List<Map<String, Object>> arr = (List<Map<String, Object>>) query.get(key);
+                    if (arr != null) for (Map<String, Object> m : arr) {
+                        String from = (String) m.get("from"), to = (String) m.get("to");
+                        if (from != null && to != null) finalToOriginal.put(to, from);
+                    }
+                }
+
+                Map<String, Object> pages = (Map<String, Object>) query.get("pages");
+                if (pages == null) continue;
+
+                for (Object pageObj : pages.values()) {
+                    Map<String, Object> page = (Map<String, Object>) pageObj;
+                    if (page.containsKey("missing")) continue;
+
+                    String title = (String) page.get("title");
+                    if (title == null) continue;
+
+                    Map<String, Object> props = (Map<String, Object>) page.get("pageprops");
+                    if (props == null) continue;
+
+                    String qid = (String) props.get("wikibase_item");
+                    if (qid == null) continue;
+
+                    result.put(title, qid);
+                    String original = finalToOriginal.get(title);
+                    if (original != null) result.put(original, qid);
+                }
+            } catch (Exception e) {
+                logger.warn("Wikidata batch lookup failed ({} titles): {}", batch.size(), e.getMessage());
+            }
+        }
+        return result;
+    }
+    
     private int findYearColumnIndex(Element table) {
         Elements headers = table.select("th");
         for (int i = 0; i < headers.size(); i++) {
@@ -741,6 +1041,15 @@ public class AlbumWikipediaService {
         private String rawWikipediaUrl; 
         private String releaseType;
 
+        private Set<String> rawWikipediaUrlCandidates; 
+        
+        public Set<String> getRawWikipediaUrlCandidates() {
+            return rawWikipediaUrlCandidates;
+        }
+        public void setRawWikipediaUrlCandidates(Set<String> rawWikipediaUrlCandidates) {
+            this.rawWikipediaUrlCandidates = rawWikipediaUrlCandidates;
+        }
+        
         public String getTitle() { return title; }
         public void setTitle(String title) { this.title = title; }
 
