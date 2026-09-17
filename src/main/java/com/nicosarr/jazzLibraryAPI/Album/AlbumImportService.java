@@ -50,10 +50,35 @@ public class AlbumImportService {
                     break;
                 }
 
-                // Check if album already exists
+             // Check if album already exists
                 Album existing = findExistingAlbum(raw);
                 if (existing != null) {
-                    // Link artist to existing album (update is_main if needed)
+                    // Backfill fields that were missing when this row was first created
+                    boolean changed = false;
+
+                    if ((existing.getRaw_wikipedia_url() == null || existing.getRaw_wikipedia_url().isBlank())
+                            && raw.getRawWikipediaUrl() != null && !raw.getRawWikipediaUrl().isBlank()) {
+                        existing.setRaw_wikipedia_url(raw.getRawWikipediaUrl());
+                        changed = true;
+                    }
+
+                    if ((existing.getWikidata_id() == null || existing.getWikidata_id().isBlank())
+                            && raw.getWikidataId() != null && !raw.getWikidataId().isBlank()) {
+                        existing.setWikidata_id(raw.getWikidataId());
+                        changed = true;
+                    }
+
+                    if ((existing.getWikipedia_url() == null || existing.getWikipedia_url().isBlank())
+                            && raw.getWikipediaUrl() != null && !raw.getWikipediaUrl().isBlank()) {
+                        existing.setWikipedia_url(raw.getWikipediaUrl());
+                        changed = true;
+                    }
+
+                    if (changed) {
+                        entityManager.merge(existing);
+                        logger.debug("Backfilled wiki fields on existing album '{}'", existing.getTitle());
+                    }
+
                     linkArtistToAlbum(artist, existing, raw.isMain());
                     continue;
                 }
@@ -115,7 +140,7 @@ public class AlbumImportService {
         album.setReleased(raw.getReleased());
         album.setWikidata_id(raw.getWikidataId());
         album.setRelease_id(null); // will be filled later
-        //album.setWikipedia_url(raw.getWikipediaUrl());   
+        album.setWikipedia_url(raw.getWikipediaUrl());   
         album.setRaw_wikipedia_url(raw.getRawWikipediaUrl());
         album.setLabels(raw.getLabel());
         album.setRelease_type(raw.getReleaseType());
