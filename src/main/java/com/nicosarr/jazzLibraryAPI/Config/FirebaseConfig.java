@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
 
+
 import jakarta.annotation.PostConstruct;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
@@ -65,5 +66,4 @@ public class FirebaseConfig {
     public FirebaseAuth firebaseAuth() {
         return FirebaseAuth.getInstance();
     }
-    
 }
