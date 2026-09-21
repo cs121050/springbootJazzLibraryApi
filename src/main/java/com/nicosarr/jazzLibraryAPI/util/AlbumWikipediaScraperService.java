@@ -62,29 +62,38 @@ public class AlbumWikipediaScraperService {
 
     // ---------------------------------------------------------------
     public ScrapedAlbumData scrape(String wikipediaUrl) {
-        if (wikipediaUrl == null || wikipediaUrl.isBlank()) return null;
-
-        logger.debug("Scrape START {}", wikipediaUrl);
-        Document doc = fetchPage(wikipediaUrl);
-        if (doc == null) {
-            logger.debug("Scrape FAILED (no document) {}", wikipediaUrl);
+        if (wikipediaUrl == null || wikipediaUrl.isBlank()) {
+            logger.debug("Scrape SKIP (null/blank url)");
             return null;
         }
+
+        logger.debug("Scrape START '{}'", wikipediaUrl);
+
+        Document doc = fetchPage(wikipediaUrl);
+        if (doc == null) {
+            logger.warn("Scrape FAILED fetch '{}'", wikipediaUrl);
+            return null;
+        }
+
+        logger.debug("Scrape FETCHED ok title='{}' bytes={}",
+                     doc.title(), doc.html().length());
 
         ScrapedAlbumData data = new ScrapedAlbumData();
         data.articleText = extractArticleText(doc);
         data.personnel   = scrapePersonnel(doc);
         data.tracklist   = scrapeTracklist(doc);
 
-        logger.debug("Scrape OK {} — articleText={} chars, personnel={}, tracks={}",
-                wikipediaUrl,
-                data.articleText == null ? 0 : data.articleText.length(),
-                data.personnel.size(),
-                data.tracklist.size());
+        logger.debug("Scrape PARSED '{}': articleText={} chars, personnel={}, tracks={}",
+                     wikipediaUrl,
+                     data.articleText == null ? 0 : data.articleText.length(),
+                     data.personnel.size(),
+                     data.tracklist.size());
 
         if (data.personnel.isEmpty()
                 && data.tracklist.isEmpty()
                 && (data.articleText == null || data.articleText.isBlank())) {
+            logger.warn("Scrape DROPPED '{}' — nothing extracted (no personnel, no tracks, no article text)",
+                        wikipediaUrl);
             return null;
         }
         return data;
@@ -95,26 +104,29 @@ public class AlbumWikipediaScraperService {
         long now  = System.currentTimeMillis();
         long wait = MIN_GAP_MS - (now - lastFetch.get());
         if (wait > 0) {
-            logger.trace("Throttling Jsoup for {} ms before {}", wait, url);
+            logger.trace("Throttling {} ms", wait);
             try { Thread.sleep(wait); }
             catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
         }
         lastFetch.set(System.currentTimeMillis());
 
         try {
-            return Jsoup.connect(url)
-                    .userAgent(USER_AGENT)
+        	String encoded = safeUrl(url);
+        	logger.debug("Jsoup GET -> '{}' (raw was '{}')", encoded, url);
+        	Document doc = Jsoup.connect(encoded)
+        	        .userAgent(USER_AGENT)
                     .header("Accept", "text/html,application/xhtml+xml")
                     .header("Accept-Language", "en")
                     .timeout(15000)
                     .maxBodySize(0)
                     .get();
+            logger.debug("Jsoup GET <- '{}' status=OK title='{}'", url, doc.title());
+            return doc;
         } catch (IOException e) {
-            logger.warn("Scrape HTTP failed for {}: {}", url, e.getMessage());
+            logger.warn("Jsoup GET FAILED '{}': {} — {}", url, e.getClass().getSimpleName(), e.getMessage());
             return null;
         }
     }
-
 	
 	/**
 	 * Returns a JSON object mapping section headings → their paragraph text,
@@ -531,6 +543,49 @@ private List<Map<String, Object>> parseTrackList(Element ol) {
         out.add(track);
     }
     return out;
+}
+
+private String safeUrl(String raw) {
+    if (raw == null) return null;
+    try {
+        // Split "scheme://authority/path?query#fragment" manually so we
+        // don't need the strict URI(String) parser.
+        int schemeEnd = raw.indexOf("://");
+        if (schemeEnd < 0) return raw;
+        String scheme = raw.substring(0, schemeEnd);
+
+        String rest = raw.substring(schemeEnd + 3);          // authority + path + query + fragment
+
+        int pathStart = rest.indexOf('/');
+        if (pathStart < 0) return raw;                       // no path — nothing to encode
+        String authority = rest.substring(0, pathStart);
+        String pathAndMore = rest.substring(pathStart);      // "/wiki/..." (may include ? and #)
+
+        int qIdx = pathAndMore.indexOf('?');
+        int hIdx = pathAndMore.indexOf('#');
+        int cut = pathAndMore.length();
+        if (qIdx >= 0) cut = Math.min(cut, qIdx);
+        if (hIdx >= 0) cut = Math.min(cut, hIdx);
+
+        String path     = pathAndMore.substring(0, cut);
+        String query    = null;
+        String fragment = null;
+
+        if (qIdx >= 0) {
+            int qEnd = (hIdx > qIdx) ? hIdx : pathAndMore.length();
+            query = pathAndMore.substring(qIdx + 1, qEnd);
+        }
+        if (hIdx >= 0) {
+            fragment = pathAndMore.substring(hIdx + 1);
+        }
+
+        // The multi-arg constructor percent-encodes the illegal characters
+        // (" ? # < > [ ] etc.) inside each component.
+        return new java.net.URI(scheme, authority, path, query, fragment).toASCIIString();
+    } catch (Exception e) {
+        logger.warn("Could not normalise URL '{}': {}", raw, e.getMessage());
+        return raw;
+    }
 }
 
     private String cleanTitle(String s) {
