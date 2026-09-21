@@ -132,6 +132,10 @@ public class AlbumImportService {
     }
 
     private Album createAlbumFromRaw(AlbumWikipediaService.AlbumRawData raw) {
+    	
+    	System.out.println(">>> PERSISTING: " + raw.getTitle() + " | " + raw.getWikipediaUrl());
+    	logger.debug("Persisting '{}' url={}", raw.getTitle(), raw.getWikipediaUrl());
+    	
         Album album = new Album();
         album.setTitle(raw.getTitle());
         if (raw.getYear() != null) {
