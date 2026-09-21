@@ -561,7 +561,6 @@ public class AlbumWikipediaService {
                     if (wikiIdx >= 0) {
                         String pageTitle = href.substring(wikiIdx + "/wiki/".length());
                         if (pageTitle.contains("#")) pageTitle = pageTitle.substring(0, pageTitle.indexOf('#'));
-                        pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
                         wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
                         
                     }
@@ -596,7 +595,7 @@ public class AlbumWikipediaService {
                 String pageTitle = href.substring(wikiIdx + "/wiki/".length());
                 int hashIdx = pageTitle.indexOf('#');
                 if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
-                pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
+                
 
                 allUrls.add("https://en.wikipedia.org/wiki/" + pageTitle);
             }
@@ -633,7 +632,6 @@ public class AlbumWikipediaService {
                         String pageTitle = href.substring(wikiIdx + "/wiki/".length());
                         int hashIdx = pageTitle.indexOf('#');
                         if (hashIdx > 0) pageTitle = pageTitle.substring(0, hashIdx);
-                        pageTitle = java.net.URLDecoder.decode(pageTitle, StandardCharsets.UTF_8);
 
                         wikipediaUrl = "https://en.wikipedia.org/wiki/" + pageTitle;
                        

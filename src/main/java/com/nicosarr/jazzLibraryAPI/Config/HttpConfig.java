@@ -6,6 +6,7 @@ import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 
+
 import java.util.concurrent.atomic.AtomicLong;
 
 @Configuration
@@ -29,6 +30,12 @@ public class HttpConfig {
         RestTemplate rt = new RestTemplate(factory);
         rt.getInterceptors().add(userAgentInterceptor());
         return rt;
+    }
+    
+    @Bean
+    public org.springframework.transaction.support.TransactionTemplate transactionTemplate(
+            org.springframework.transaction.PlatformTransactionManager tm) {
+        return new org.springframework.transaction.support.TransactionTemplate(tm);
     }
 
     private ClientHttpRequestInterceptor userAgentInterceptor() {
