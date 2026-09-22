@@ -80,6 +80,8 @@ public class AlbumWikipediaScraperService {
 
         ScrapedAlbumData data = new ScrapedAlbumData();
         data.articleText = extractArticleText(doc);
+        data.wikidataId = extractWikibaseItemId(doc);
+        logger.debug("Scrape WIKIDATA '{}': qid={}", wikipediaUrl, data.wikidataId);
         data.personnel   = scrapePersonnel(doc);
         data.tracklist   = scrapeTracklist(doc);
 
@@ -91,7 +93,8 @@ public class AlbumWikipediaScraperService {
 
         if (data.personnel.isEmpty()
                 && data.tracklist.isEmpty()
-                && (data.articleText == null || data.articleText.isBlank())) {
+                && (data.articleText == null || data.articleText.isBlank())
+                && data.wikidataId == null) {  
             logger.warn("Scrape DROPPED '{}' — nothing extracted (no personnel, no tracks, no article text)",
                         wikipediaUrl);
             return null;
@@ -547,41 +550,34 @@ private List<Map<String, Object>> parseTrackList(Element ol) {
 
 private String safeUrl(String raw) {
     if (raw == null) return null;
+
+    // 1. Try the strict parser first. If it accepts the URL, it is already
+    //    valid — return it unchanged. This preserves any existing %XX.
     try {
-        // Split "scheme://authority/path?query#fragment" manually so we
-        // don't need the strict URI(String) parser.
-        int schemeEnd = raw.indexOf("://");
-        if (schemeEnd < 0) return raw;
-        String scheme = raw.substring(0, schemeEnd);
+        return new java.net.URI(raw).toASCIIString();
+    } catch (java.net.URISyntaxException ignored) {
+        // fall through
+    }
 
-        String rest = raw.substring(schemeEnd + 3);          // authority + path + query + fragment
+    // 2. Strict parse failed. Escape only the characters that are illegal
+    //    in a URI but that are likely to appear in a Wikipedia article title.
+    //    Leave '%' alone — it is the marker for an already-encoded byte.
+    String escaped = raw
+            .replace(" ", "%20")
+            .replace("\"", "%22")
+            .replace("<",  "%3C")
+            .replace(">",  "%3E")
+            .replace("[",  "%5B")
+            .replace("]",  "%5D")
+            .replace("{",  "%7B")
+            .replace("}",  "%7D")
+            .replace("|",  "%7C")
+            .replace("\\", "%5C")
+            .replace("^",  "%5E")
+            .replace("`",  "%60");
 
-        int pathStart = rest.indexOf('/');
-        if (pathStart < 0) return raw;                       // no path — nothing to encode
-        String authority = rest.substring(0, pathStart);
-        String pathAndMore = rest.substring(pathStart);      // "/wiki/..." (may include ? and #)
-
-        int qIdx = pathAndMore.indexOf('?');
-        int hIdx = pathAndMore.indexOf('#');
-        int cut = pathAndMore.length();
-        if (qIdx >= 0) cut = Math.min(cut, qIdx);
-        if (hIdx >= 0) cut = Math.min(cut, hIdx);
-
-        String path     = pathAndMore.substring(0, cut);
-        String query    = null;
-        String fragment = null;
-
-        if (qIdx >= 0) {
-            int qEnd = (hIdx > qIdx) ? hIdx : pathAndMore.length();
-            query = pathAndMore.substring(qIdx + 1, qEnd);
-        }
-        if (hIdx >= 0) {
-            fragment = pathAndMore.substring(hIdx + 1);
-        }
-
-        // The multi-arg constructor percent-encodes the illegal characters
-        // (" ? # < > [ ] etc.) inside each component.
-        return new java.net.URI(scheme, authority, path, query, fragment).toASCIIString();
+    try {
+        return new java.net.URI(escaped).toASCIIString();
     } catch (Exception e) {
         logger.warn("Could not normalise URL '{}': {}", raw, e.getMessage());
         return raw;
@@ -652,6 +648,9 @@ private String safeUrl(String raw) {
     return section;
 }
 
+    
+    
+    
 private Element findFirstHeading(Element sec) {
     for (Element c : sec.children()) {
         if (c.hasClass("mw-heading")) {
@@ -664,9 +663,25 @@ private Element findFirstHeading(Element sec) {
     return null;
 }
 
+
+private static final Pattern WIKIBASE_ITEM =
+Pattern.compile("\"wgWikibaseItemId\"\\s*:\\s*\"(Q\\d+)\"");
+
+/** Reads the Q-id MediaWiki embeds in every page it renders. */
+private String extractWikibaseItemId(Document doc) {
+for (Element script : doc.select("script")) {
+String data = script.data();
+if (data == null || !data.contains("wgWikibaseItemId")) continue;
+Matcher m = WIKIBASE_ITEM.matcher(data);
+if (m.find()) return m.group(1);
+}
+return null;
+}
+
     // ===============================================================
     public static class ScrapedAlbumData {
         public String articleText;                                              // → wikipedia_data
+        public String wikidataId;  
         public List<Map<String, Object>> personnel = Collections.emptyList();   // → extra_artists
         public List<Map<String, Object>> tracklist = Collections.emptyList();   // → tracklist
     }

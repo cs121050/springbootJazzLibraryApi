@@ -129,8 +129,9 @@ public class AlbumWikidataService {
                 .build().encode(StandardCharsets.UTF_8).toUri();
 
         try {
-            ResponseEntity<String> resp = restTemplate.getForEntity(uri, String.class);
-            if (resp.getBody() == null) return out;
+        	ResponseEntity<String> resp = callWithRetry(uri);
+
+        	if (resp.getBody() == null) return out;
 
             JsonNode entities = mapper.readTree(resp.getBody()).get("entities");
             if (entities == null) return out;
@@ -263,7 +264,7 @@ public class AlbumWikidataService {
                     .queryParam("languages", "en")
                     .build().encode(StandardCharsets.UTF_8).toUri();
             try {
-                ResponseEntity<String> resp = restTemplate.getForEntity(uri, String.class);
+            	ResponseEntity<String> resp = callWithRetry(uri);
                 if (resp.getBody() == null) continue;
                 JsonNode entities = mapper.readTree(resp.getBody()).get("entities");
                 if (entities == null) continue;
@@ -281,6 +282,35 @@ public class AlbumWikidataService {
         return result;
     }
 
+    /**
+     * Same retry-on-429 pattern as AlbumWikipediaService.
+     * Sleeps 1s, 3s, 8s, 20s between attempts, then gives up.
+     */
+    private org.springframework.http.ResponseEntity<String> callWithRetry(URI uri) {
+        long[] backoffMs = { 1000, 3000, 8000, 20000 };
+        for (int attempt = 0; attempt <= backoffMs.length; attempt++) {
+            try {
+                var resp = restTemplate.getForEntity(uri, String.class);
+                int status = resp.getStatusCode().value();
+                if (status != 429) return resp;
+
+                if (attempt == backoffMs.length) return resp;   // out of retries
+                logger.warn("Wikidata 429 (attempt {}), sleeping {} ms...",
+                            attempt + 1, backoffMs[attempt]);
+                Thread.sleep(backoffMs[attempt]);
+
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                throw new RuntimeException("Interrupted during 429 backoff", ie);
+            } catch (Exception e) {
+                if (attempt == backoffMs.length) throw new RuntimeException(e);
+                try { Thread.sleep(backoffMs[attempt]); }
+                catch (InterruptedException ignored) { Thread.currentThread().interrupt(); }
+            }
+        }
+        throw new IllegalStateException("unreachable");
+    }
+    
     // ---------------------------------------------------------------
     public static class WikidataAlbum {
         public String qid;
