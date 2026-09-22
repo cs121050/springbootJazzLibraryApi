@@ -48,7 +48,7 @@ public class Album {
 	        columnDefinition = "NVARCHAR(500)")
 	private String wikipedia_url;
 	
-	@Column(name = "raw_wikipedia_url", columnDefinition = "TEXT")
+	@Column(name = "raw_wikipedia_url", columnDefinition = "NVARCHAR(MAX)")
 	private String raw_wikipedia_url;
 	
 	@Column(name = "wikidata_id")

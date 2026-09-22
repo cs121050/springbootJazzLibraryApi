@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nicosarr.jazzLibraryAPI.util.AlbumWikipediaService;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
@@ -33,69 +37,82 @@ public class AlbumEnrichmentService {
     @Autowired private AlbumWikipediaScraperService scraperService;
     @Autowired private TransactionTemplate transactionTemplate;
 
+    @Autowired
+    private AlbumWikipediaService albumWikipediaService;
+
     private final ObjectMapper mapper = new ObjectMapper();
+    
 
     // ===============================================================
     // ENTRY POINT
     // ===============================================================
-    public String enrichAll(JobContext jobContext, Integer limit) {
-        AtomicInteger processed = new AtomicInteger();
-        AtomicInteger updated   = new AtomicInteger();
-        AtomicInteger errors    = new AtomicInteger();
+ // ===============================================================
+ // ENTRY POINT
+ // ===============================================================
+ public String enrichAll(JobContext jobContext, Integer limit) {
+     AtomicInteger processed = new AtomicInteger();
+     AtomicInteger updated   = new AtomicInteger();
+     AtomicInteger errors    = new AtomicInteger();
 
-        logger.info("=== Album enrichment job START (limit={}) ===", limit);
+     logger.info("=== Album enrichment job START (limit={}) ===", limit);
 
-        int offset = 0;
-        int batchNo = 0;
-        while (true) {
-            if (jobContext != null && jobContext.isCancelled()) {
-                logger.info("Job cancelled by user at offset {}", offset);
-                break;
-            }
+     int offset = 0;
+     int batchNo = 0;
+     while (true) {
+         if (jobContext != null && jobContext.isCancelled()) {
+             logger.info("Job cancelled by user at offset {}", offset);
+             break;
+         }
 
-            logger.debug("Loading batch #{} (offset={}, size={})", batchNo, offset, BATCH);
-            List<Album> batch = loadBatch(offset, BATCH);
-            if (batch.isEmpty()) {
-                logger.debug("No more albums to process at offset {}", offset);
-                break;
-            }
-            batchNo++;
-            logger.info("--- Batch #{} : {} albums loaded ---", batchNo, batch.size());
+         logger.debug("Loading batch #{} (offset={}, size={})", batchNo, offset, BATCH);
+         List<Album> batch = loadBatch(offset, BATCH);
+         if (batch.isEmpty()) {
+             logger.debug("No more albums to process at offset {}", offset);
+             break;
+         }
+         batchNo++;
+         logger.info("--- Batch #{} : {} albums loaded ---", batchNo, batch.size());
 
-            // ---------- PHASE A : resolve Q-ids (network) ----------
-            Map<Integer, String> albumToQid = resolveQids(batch);
+         // ---- Decide wikipedia_url from raw_wikipedia_url for every album in the batch.
+         //      Runs on the detached entities; the write phase copies the result across. ----
+         for (Album album : batch) {
+             pickAlbumUrl(album);
+         }
 
-            // ---------- PHASE B : batch-fetch Wikidata (network) ----------
-            Map<String, WikidataAlbum> wdByQid = albumToQid.isEmpty()
-                    ? Collections.emptyMap()
-                    : wikidataService.fetchAlbums(albumToQid.values());
-            logger.debug("Wikidata returned {} entities for {} requested qids",
-                    wdByQid.size(), albumToQid.size());
+         // ---------- PHASE A : resolve Q-ids (network) ----------
+         Map<Integer, String> albumToQid = resolveQids(batch);
 
-            // ---------- PHASE C : scrape Wikipedia where needed (network) ----------
-            Map<Integer, ScrapedAlbumData> scrapes = scrapeBatch(batch);
+         // ---------- PHASE B : batch-fetch Wikidata (network) ----------
+         Map<String, WikidataAlbum> wdByQid = albumToQid.isEmpty()
+                 ? Collections.emptyMap()
+                 : wikidataService.fetchAlbums(albumToQid.values());
+         logger.debug("Wikidata returned {} entities for {} requested qids",
+                 wdByQid.size(), albumToQid.size());
 
-            // ---------- PHASE D : ONE transaction for the whole batch ----------
-            int[] result = writeBatch(batch, albumToQid, wdByQid, scrapes, errors);
-            processed.addAndGet(batch.size());
-            updated.addAndGet(result[0]);
+         // ---------- PHASE C : scrape Wikipedia where needed (network) ----------
+         Map<Integer, ScrapedAlbumData> scrapes = scrapeBatch(batch);
 
-            logger.info("Batch #{} done — updated={}, errors(total)={}",
-                    batchNo, result[0], errors.get());
+         // ---------- PHASE D : ONE transaction for the whole batch ----------
+         int[] result = writeBatch(batch, albumToQid, wdByQid, scrapes, errors);
+         processed.addAndGet(batch.size());
+         updated.addAndGet(result[0]);
 
-            offset += BATCH;
-            if (limit != null && offset >= limit) {
-                logger.info("Reached limit {} — stopping", limit);
-                break;
-            }
-        }
+         logger.info("Batch #{} done — updated={}, errors(total)={}",
+                 batchNo, result[0], errors.get());
 
-        String summary = String.format(
-                "Album enrichment finished: processed=%d, updated=%d, errors=%d",
-                processed.get(), updated.get(), errors.get());
-        logger.info(summary);
-        return summary;
-    }
+         offset += BATCH;
+         if (limit != null && offset >= limit) {
+             logger.info("Reached limit {} — stopping", limit);
+             break;
+         }
+     }
+
+     String summary = String.format(
+             "Album enrichment finished: processed=%d, updated=%d, errors=%d",
+             processed.get(), updated.get(), errors.get());
+     logger.info(summary);
+     return summary;
+ }
 
     // ===============================================================
     // PHASE A : resolve Q-ids for every album in the batch
@@ -143,7 +160,8 @@ public class AlbumEnrichmentService {
             boolean needsPersonnel = isBlank(a.getExtra_artists());
             boolean needsTracklist = isBlank(a.getTracklist());
             boolean needsArticle   = isBlank(a.getWikipedia_data());
-
+            boolean needsQid       = isBlank(a.getWikidata_id()); 
+            
             if (!needsPersonnel && !needsTracklist && !needsArticle) {
                 skipped++;
                 continue;
@@ -191,6 +209,15 @@ public class AlbumEnrichmentService {
                 }
 
                 boolean any = false;
+                
+                // ---- Carry over wikipedia_url chosen by pickAlbumUrl ----
+                if (!java.util.Objects.equals(a.getWikipedia_url(), stale.getWikipedia_url())) {
+                    logger.debug("Album {} — wikipedia_url {} -> {}",
+                                 a.getAlbum_id(), a.getWikipedia_url(), stale.getWikipedia_url());
+                    a.setWikipedia_url(stale.getWikipedia_url());
+                    any = true;
+                }
+                
                 try {
                     // ---- Wikidata ----
                     String qid = albumToQid.get(a.getAlbum_id());
@@ -321,6 +348,82 @@ public class AlbumEnrichmentService {
         return changed;
     }
 
+    /**
+     * Reads album.raw_wikipedia_url (a JSON array), asks Wikipedia which of those
+     * URLs are album pages, and:
+     *   - if any are  → sets album.wikipedia_url to one of them
+     *   - if none is  → sets album.wikipedia_url to NULL
+     * raw_wikipedia_url is never modified.
+     */
+    private void pickAlbumUrl(Album album) {
+        String raw = album.getRaw_wikipedia_url();
+        if (raw == null || raw.isBlank()) {
+            // Nothing to choose from. Per the desired behaviour, clear the
+            // (unvalidated) wikipedia_url so it can't be wrong.
+            if (album.getWikipedia_url() != null) {
+                logger.debug("Album {} '{}' — no raw_wikipedia_url; clearing wikipedia_url",
+                             album.getAlbum_id(), album.getTitle());
+                album.setWikipedia_url(null);
+            }
+            return;
+        }
+
+        // 1. parse the JSON array of candidate URLs
+        Set<String> candidates = new LinkedHashSet<>();
+        try {
+            JsonNode arr = mapper.readTree(raw);
+            if (arr != null && arr.isArray()) {
+                for (JsonNode n : arr) {
+                    if (n.isTextual() && !n.asText().isBlank()) {
+                        candidates.add(n.asText());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.warn("Album {} — cannot parse raw_wikipedia_url: {}",
+                        album.getAlbum_id(), e.getMessage());
+            album.setWikipedia_url(null);
+            return;
+        }
+
+        if (candidates.isEmpty()) {
+            album.setWikipedia_url(null);
+            return;
+        }
+
+        // 2. batch-check which of those pages are categorised as albums
+        Set<String> albumUrls;
+        try {
+            albumUrls = albumWikipediaService.filterToAlbumPages(candidates);
+        } catch (Exception e) {
+            logger.warn("Album {} — category lookup failed: {}",
+                        album.getAlbum_id(), e.getMessage());
+            album.setWikipedia_url(null);
+            return;
+        }
+
+        // 3. decide the new value
+        String previous = album.getWikipedia_url();
+        String chosen;
+
+        if (albumUrls.isEmpty()) {
+            // Rule: no album page among the candidates → NULL.
+            chosen = null;
+            logger.debug("Album {} '{}' — no album URL among {} candidates; wikipedia_url -> NULL",
+                         album.getAlbum_id(), album.getTitle(), candidates.size());
+        } else if (previous != null && albumUrls.contains(previous)) {
+            // Keep the existing value — it's already a valid album URL.
+            chosen = previous;
+        } else {
+            // Pick a real album URL.
+            chosen = albumUrls.iterator().next();
+            logger.debug("Album {} '{}' — wikipedia_url '{}' -> '{}'",
+                         album.getAlbum_id(), album.getTitle(), previous, chosen);
+        }
+
+        album.setWikipedia_url(chosen);
+    }
+    
     // ===============================================================
     // Scraper → Album (per album, inside tx)
     // ===============================================================
@@ -346,6 +449,14 @@ public class AlbumEnrichmentService {
                 if (!sc.articleText.equals(a.getWikipedia_data())) {
                     a.setWikipedia_data(sc.articleText); changed = true;
                 }
+            }
+            
+         // Last-resort Q-id: pulled from the page's wgWikibaseItemId.
+            if (isBlank(a.getWikidata_id())
+                    && sc.wikidataId != null
+                    && QID.matcher(sc.wikidataId).matches()) {
+                a.setWikidata_id(sc.wikidataId);
+                changed = true;
             }
         } catch (Exception e) {
             logger.warn("Serialize scrape result for album {} failed: {}",

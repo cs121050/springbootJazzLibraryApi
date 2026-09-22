@@ -70,20 +70,34 @@ public class AlbumWikipediaService {
     	private boolean isReleaseHeading(String headingText) {
     	    if (headingText == null) return false;
     	    String h = headingText.toLowerCase(Locale.ROOT).trim();
-    	    if (h.contains("as leader") || h.contains("as sideman")
+    	    if (h.contains("as leader") || h.contains("as sole leader") || h.contains("co-leader") || h.contains("as sideman") 
     	            || h.contains("as guest")
-    	            || h.equals("leader") || h.equals("sideman")) {
+    	            || h.equals("leader") || h.contains("sideman")  ) {
     	        return true;
     	    }
     	    return DISCOGRAPHY_HEADING_KEYWORDS.stream().anyMatch(h::contains);
     	}
 
     	/** Is this the artist's own main album section? */
+    	/** Is this the artist's own main album section? */
     	private boolean isMainReleaseSection(String headingText) {
-    	    String h = headingText.toLowerCase(Locale.ROOT);
-    	    if (h.contains("sideman") || h.contains("as guest")) return false;
-    	    if (h.contains("single") || h.contains("compilation") || h.contains("promo")) return false;
-    	    return h.contains("discography") || h.contains("album") || h.contains("leader");
+    	    if (headingText == null) return false;
+    	    String h = headingText.toLowerCase(Locale.ROOT).trim();
+
+    	    // Anything that clearly marks a "sideman" / "guest" section → is_main = 0
+    	    boolean sidemanOrGuest =
+    	            h.contains("as sideman")
+    	         || h.contains("sideman")
+    	         || h.contains("as guest")
+    	         || h.contains("guest");
+
+    	    boolean result = !sidemanOrGuest;
+
+    	    // ---- DEBUG: verify how each heading is classified ----
+    	    logger.debug("isMainReleaseSection('{}') -> isMain={} (sidemanOrGuest={})",
+    	                 headingText, result, sidemanOrGuest);
+
+    	    return result;
     	}
 
 
@@ -188,13 +202,20 @@ public class AlbumWikipediaService {
             boolean isMain      = isMainReleaseSection(headingText);
 
             // ---- Skip singles and promos entirely ----
-            if ("single".equals(releaseType) || "promo".equals(releaseType)) {
-                logger.debug("Skipping section '{}' (releaseType={})", heading.text(), releaseType);
+         // ---- Skip singles, promos and compilations entirely ----
+            if ("single".equals(releaseType)
+                    || "promo".equals(releaseType)
+                    || "compilation".equals(releaseType)
+                    || "anthologies".equals(releaseType)
+                    || "anthologie".equals(releaseType)
+            		) {
+                logger.debug("Skipping section '{}' (releaseType={}) — not importing",
+                             heading.text(), releaseType);
                 continue;
             }
 
-            logger.debug("Section '{}' -> releaseType={} isMain={}",
-                         heading.text(), releaseType, isMain);
+            logger.debug("Section '{}' -> releaseType={} isMain={} (headingText='{}')",
+                    heading.text(), releaseType, isMain, headingText);
 
             Element sectionContent = getSectionContent(heading);
             if (sectionContent == null) continue;
@@ -207,8 +228,8 @@ public class AlbumWikipediaService {
                         data.setMain(isMain);
                         data.setReleaseType(releaseType);
                         albums.add(data);
-                        logger.debug("Added from list: '{}' (year={}, type={})",
-                                     data.getTitle(), data.getYear(), releaseType);
+                        logger.debug("Added album '{}' (year={}, type={}, isMain={}, from heading '{}')",
+                                data.getTitle(), data.getYear(), releaseType, isMain, heading.text());
                     }
                 }
             }
@@ -273,32 +294,18 @@ public class AlbumWikipediaService {
             }
         }
 
-        // ---- One batched filter for the whole page ----
-        Set<String> allCandidates = new LinkedHashSet<>();
-        for (AlbumRawData a : albums) {
-            if (a.getRawWikipediaUrlCandidates() != null) {
-                allCandidates.addAll(a.getRawWikipediaUrlCandidates());
-            }
-        }
+        
+        
+     // ---- Store every candidate URL, unfiltered.
+//      Deciding which one is the album page happens later, in enrichment. ----
+for (AlbumRawData a : albums) {
+    Set<String> mine = a.getRawWikipediaUrlCandidates();
+    if (mine == null || mine.isEmpty()) continue;
 
-        if (!allCandidates.isEmpty()) {
-            Set<String> albumUrls = filterToAlbumPages(allCandidates);
-
-            for (AlbumRawData a : albums) {
-                Set<String> mine = a.getRawWikipediaUrlCandidates();
-                if (mine == null || mine.isEmpty()) continue;
-
-                List<String> keep = new ArrayList<>();
-                for (String u : mine) {
-                    if (albumUrls.contains(u)) keep.add(u);
-                }
-                if (keep.isEmpty()) continue;
-
-                a.setRawWikipediaUrl(keep.stream()
-                        .map(u -> "\"" + u.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
-                        .collect(java.util.stream.Collectors.joining(",", "[", "]")));
-            }
-        }
+    a.setRawWikipediaUrl(mine.stream()
+            .map(u -> "\"" + u.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+            .collect(java.util.stream.Collectors.joining(",", "[", "]")));
+}
 
      // ---- Batched Wikidata lookup for all album pages on this page ----
         Set<String> titlesToLookup = new LinkedHashSet<>();
@@ -347,26 +354,48 @@ public class AlbumWikipediaService {
         Element current = startFrom;
 
         while (current != null) {
-            // (A) Parsoid: a nested <section> sibling is a sub-section.
-            //     Its content belongs to another heading and will be parsed there.
+            // (A) Parsoid: a sibling <section> is a sub-section.
+            //     Look at the heading inside it:
+            //       * same or higher level  -> it's a peer, stop here
+            //       * a release heading     -> it will be processed separately, stop here
+            //       * deeper level          -> absorb it as part of our content
             if ("section".equals(current.tagName())) {
-                break;
+                Element innerHead = findFirstHeading(current);
+                if (innerHead != null) {
+                    int innerLevel = Integer.parseInt(innerHead.tagName().substring(1));
+                    if (innerLevel <= headingLevel) break;
+                    if (isReleaseHeading(innerHead.text())) break;
+                }
+                section.appendChild(current.clone());
+                current = current.nextElementSibling();
+                continue;
             }
 
             // (B) Legacy / non-Parsoid HTML: raw heading tags.
             if (current.tagName().matches("h[2-6]")) {
-                String text = current.text();
-                if (isReleaseHeading(text)) break;
-                if (current.tagName().matches("h[23]")) {
-                    int nextLevel = Integer.parseInt(current.tagName().substring(1));
-                    if (nextLevel <= headingLevel) break;
-                }
+                int nextLevel = Integer.parseInt(current.tagName().substring(1));
+                if (nextLevel <= headingLevel) break;
+                if (isReleaseHeading(current.text())) break;
             }
 
             section.appendChild(current.clone());
             current = current.nextElementSibling();
         }
         return section;
+    }
+
+    /** Find the first heading (h2..h6) inside a section element, or null. */
+    private Element findFirstHeading(Element sec) {
+        if (sec == null) return null;
+        for (Element c : sec.children()) {
+            if (c.hasClass("mw-heading")) {
+                Element h = c.selectFirst("h2, h3, h4, h5, h6");
+                if (h != null) return h;
+            } else if (c.tagName().matches("h[2-6]")) {
+                return c;
+            }
+        }
+        return null;
     }
     // ---------- Table column detection ----------
     private int findTitleColumnIndex(Element table) {
@@ -766,7 +795,7 @@ public class AlbumWikipediaService {
      * ones whose Wikipedia page is categorised as an album. Batches 50 per API call
      * and memoises results across the whole import so no URL is ever queried twice.
      */
-    private Set<String> filterToAlbumPages(Set<String> candidateUrls) {
+    public Set<String> filterToAlbumPages(Set<String> candidateUrls) {
         if (candidateUrls == null || candidateUrls.isEmpty()) return new LinkedHashSet<>();
 
         Set<String> albumUrls = new LinkedHashSet<>();
@@ -817,7 +846,9 @@ public class AlbumWikipediaService {
             String raw = url.substring(idx + "/wiki/".length());
             int hashIdx = raw.indexOf('#');
             if (hashIdx > 0) raw = raw.substring(0, hashIdx);
-            String decoded = java.net.URLDecoder.decode(raw, StandardCharsets.UTF_8);
+            String decoded = java.net.URLDecoder.decode(
+                    raw.replace("+", "%2B"),
+                    StandardCharsets.UTF_8);
             String apiTitle = decoded.replace('_', ' ');
             titles.add(apiTitle);
             titleToUrl.put(apiTitle, url);
@@ -825,40 +856,73 @@ public class AlbumWikipediaService {
         if (titles.isEmpty()) return result;
 
         // ---- Build the URI correctly: DO NOT use URLEncoder here. ----
-        URI uri = UriComponentsBuilder
-                .fromHttpUrl("https://en.wikipedia.org/w/api.php")
-                .queryParam("action",  "query")
-                .queryParam("format",  "json")
-                .queryParam("prop",    "categories")
-                .queryParam("cllimit", "500")
-                .queryParam("redirects", "1")
-                .queryParam("titles",  String.join("|", titles))
-                .build()
-                .encode(StandardCharsets.UTF_8)   // <- encodes once, correctly
-                .toUri();
+        String titleParam = String.join("|", titles);
+        String encodedTitleParam = URLEncoder.encode(titleParam, StandardCharsets.UTF_8)
+                .replace("+", "%20"); // URLEncoder encodes space as '+', but the API wants %20
+
+        URI uri = URI.create("https://en.wikipedia.org/w/api.php"
+                + "?action=query"
+                + "&format=json"
+                + "&prop=categories"
+                + "&cllimit=500"
+                + "&redirects=1"
+                + "&titles=" + encodedTitleParam);
 
         logger.trace("Calling Wikipedia API: {}", uri);
 
         try {
         	var response = callWithRetry(uri, Map.class);   // retries on 429
+        	
+        	logger.debug("Wikipedia categories API URI: {}", uri);
+        	// after getting the response:
+        	logger.debug("Wikipedia categories API raw body: {}", response.getBody());
+        	
             if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) return result;
 
+           
             Map<String, Object> body  = response.getBody();
             Map<String, Object> query = (Map<String, Object>) body.get("query");
             if (query == null) return result;
 
             // Track redirects / normalisation so we can find our original URL back
-            Map<String, String> finalToOriginal = new HashMap<>();
-            for (String key : new String[] { "redirects", "normalized" }) {
-                List<Map<String, Object>> arr = (List<Map<String, Object>>) query.get(key);
-                if (arr != null) {
-                    for (Map<String, Object> m : arr) {
-                        String from = (String) m.get("from");
-                        String to   = (String) m.get("to");
-                        if (from != null && to != null) finalToOriginal.put(to, from);
-                    }
-                }
-            }
+         // Maps ANY title the API might hand back (raw, normalized, redirected, final)
+         // to the original URL we sent in. We seed it with the raw input map first,
+         // then walk normalization, then redirects.
+         Map<String, String> titleToUrlResolved = new HashMap<>(titleToUrl);
+
+         logger.debug("Category lookup for {} urls — resolved titles: {}",
+                 urls.size(), titleToUrlResolved.keySet());
+         
+         // Hop 1 — normalization: raw input -> normalized title
+         List<Map<String, Object>> normalized =
+                 (List<Map<String, Object>>) query.get("normalized");
+         if (normalized != null) {
+             for (Map<String, Object> m : normalized) {
+                 String from = (String) m.get("from");
+                 String to   = (String) m.get("to");
+                 if (from == null || to == null) continue;
+                 String url = titleToUrlResolved.get(from);
+                 if (url != null) titleToUrlResolved.put(to, url);
+             }
+         }
+
+         // Hop 2 — redirects: normalized title -> final title
+         List<Map<String, Object>> redirects =
+                 (List<Map<String, Object>>) query.get("redirects");
+         if (redirects != null) {
+             for (Map<String, Object> m : redirects) {
+                 String from = (String) m.get("from");
+                 String to   = (String) m.get("to");
+                 if (from == null || to == null) continue;
+                 // 'from' is normally the normalized title, so it is already in the map.
+                 // Fall back to the raw map just in case the API skips normalization.
+                 String url = titleToUrlResolved.get(from);
+                 if (url == null) url = titleToUrl.get(from);
+                 if (url != null) titleToUrlResolved.put(to, url);
+             }
+         }
+
+         logger.trace("Resolved title map ({} entries): {}", titleToUrlResolved.size(), titleToUrlResolved);
 
             Map<String, Object> pages = (Map<String, Object>) query.get("pages");
             if (pages == null) return result;
@@ -870,9 +934,9 @@ public class AlbumWikipediaService {
                 String pageTitle = (String) page.get("title");
                 if (pageTitle == null) continue;
 
-                String originalTitle = finalToOriginal.getOrDefault(pageTitle, pageTitle);
-                String url = titleToUrl.get(originalTitle);
-                if (url == null) url = titleToUrl.get(pageTitle);
+                String url = titleToUrlResolved.get(pageTitle);
+                
+                logger.trace("Page '{}' -> url '{}'", pageTitle, url);
                 if (url == null) continue;
 
                 List<Map<String, Object>> cats = (List<Map<String, Object>>) page.get("categories");
