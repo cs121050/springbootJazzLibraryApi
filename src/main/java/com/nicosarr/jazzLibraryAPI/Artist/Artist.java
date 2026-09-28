@@ -36,6 +36,9 @@ public class Artist {
     @Column(name = "artist_name")
     private String artist_name;
 
+    @Column(name = "artist_fullname")
+    private String artist_fullname;
+    
     @Column(name = "artist_surname")    
     private String artist_surname;
 
@@ -94,7 +97,7 @@ public class Artist {
     public Artist(int artist_id, String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                   String thumbnail_url, String image_author, String image_license, 
-                  String image_source_url, String wikipedia_data, String wikidata_id) {
+                  String image_source_url, String wikipedia_data, String wikidata_id, String artist_fullname) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -110,11 +113,13 @@ public class Artist {
         this.image_source_url = image_source_url;
         this.wikipedia_data = wikipedia_data;
 		this.wikidata_id = wikidata_id;
+		this.artist_fullname = artist_fullname;
     }
 
     public Artist(String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
-                  String thumbnail_url, String image_author, String image_license, String image_source_url, String wikipedia_data) {
+                  String thumbnail_url, String image_author, String image_license, String image_source_url, 
+                  String wikipedia_data, String wikidata_id, String artist_fullname) {
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
         this.instrument_id = instrument_id;	   	
@@ -201,6 +206,14 @@ public class Artist {
     
     public String getWikipedia_data() { return wikipedia_data; }
 	public void setWikipedia_data(String wikipedia_data) { 	this.wikipedia_data = wikipedia_data; }
+	
+	public String getArtist_fullname() {
+		return artist_fullname;
+	}
+
+	public void setArtist_fullname(String artist_fullname) {
+		this.artist_fullname = artist_fullname;
+	}
 
 	public String getWikidata_id() {
 	    return wikidata_id;
