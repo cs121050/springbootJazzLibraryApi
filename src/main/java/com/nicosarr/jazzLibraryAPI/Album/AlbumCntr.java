@@ -17,12 +17,16 @@ public class AlbumCntr {
     private final JobManager jobManager;
     private final AlbumEnrichmentService albumEnrichmentService;
 
+    private final MusicbrainzEnrichmentService musicbrainzEnrichmentService;
+    
     public AlbumCntr(AlbumRep rep,
                      JobManager jobManager,
-                     AlbumEnrichmentService albumEnrichmentService) {
+                     AlbumEnrichmentService albumEnrichmentService,
+                     MusicbrainzEnrichmentService musicbrainzEnrichmentService) {
         this.rep = rep;
         this.jobManager = jobManager;
         this.albumEnrichmentService = albumEnrichmentService;
+        this.musicbrainzEnrichmentService = musicbrainzEnrichmentService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_XML_VALUE)
@@ -56,6 +60,15 @@ public class AlbumCntr {
     public ResponseEntity<String> importDiscographiesPart2(@RequestParam(required = false) Integer limit) {
         String jobId = jobManager.startJob((jobContext) -> {
             String result = albumEnrichmentService.enrichAll(jobContext, limit);
+            System.out.println("Job " + jobContext.getJobId() + " finished: " + result);
+        });
+        return ResponseEntity.accepted().body("Job started. ID: " + jobId);
+    }
+    
+    @PostMapping("/importDiscographiesPart3")
+    public ResponseEntity<String> importMusicbrainzIds(@RequestParam(required = false) Integer limit) {
+        String jobId = jobManager.startJob((jobContext) -> {
+            String result = musicbrainzEnrichmentService.enrichAll(jobContext, limit);
             System.out.println("Job " + jobContext.getJobId() + " finished: " + result);
         });
         return ResponseEntity.accepted().body("Job started. ID: " + jobId);
