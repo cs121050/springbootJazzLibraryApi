@@ -48,12 +48,15 @@ public class Song {
 
     @Column(name = "video_availability")
     private String video_availability;
+    
+    @Column(columnDefinition = "TEXT") 
+    private String writer; // JSON array
 
     // Constructors following the Artist pattern (using transient IDs)
     public Song() {}
 
     public Song(int songId, int main_artist_id, int album_id, String relatedArtists,
-                String songTitle, String duration, String ytVideoId, String video_availability) {
+                String songTitle, String duration, String ytVideoId, String video_availability, String writer) {
         this.songId = songId;
         this.main_artist_id = main_artist_id;
         this.album_id = album_id;
@@ -62,6 +65,7 @@ public class Song {
         this.duration = duration;
         this.ytVideoId = ytVideoId;
         this.video_availability = video_availability;
+        this.writer = writer;
     }
 
     public Song(int main_artist_id, int album_id, String relatedArtists,
@@ -112,7 +116,17 @@ public class Song {
         this.album = album;
     }
 
-    // Transient album_id – used for JSON and temporary storage
+    
+    
+    public String getWriter() {
+		return writer;
+	}
+
+	public void setWriter(String writer) {
+		this.writer = writer;
+	}
+
+	// Transient album_id – used for JSON and temporary storage
     public int getAlbum_id() {
         return this.album != null ? this.album.getAlbum_id() : album_id;
     }

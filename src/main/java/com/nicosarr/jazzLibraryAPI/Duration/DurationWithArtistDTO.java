@@ -48,7 +48,10 @@ public class DurationWithArtistDTO {
                                 vca.getArtist().getImage_source_url(),
                                 vca.getArtist().getWikipedia_data(),
                                 vca.getArtist().getWikidata_id(),
-                                vca.getArtist().getArtist_fullname()
+                                vca.getArtist().getArtist_fullname(),
+                                vca.getArtist().getName_variations(),
+                                vca.getArtist().getBands_under_this_artist()
+                                
                             );
                             allArtists.add(artistDTO);
                         }

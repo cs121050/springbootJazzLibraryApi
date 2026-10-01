@@ -29,6 +29,9 @@ public class Instrument {
     
     @Column(name = "instrument_name")
 	private String instrument_name;
+    
+    @Column(columnDefinition = "TEXT") 
+    private String name_variations; // JSON array
 
     @OneToMany(mappedBy = "instrument", fetch = FetchType.LAZY)
     @JsonBackReference
@@ -37,14 +40,21 @@ public class Instrument {
     
 	public Instrument () {
 	}	
-	public Instrument (int instrument_id, String instrument_name){
+	public Instrument (int instrument_id, String instrument_name, String name_variations){
 	   	this.instrument_id = instrument_id;
-	   	this.instrument_name = instrument_name;   	
+	   	this.instrument_name = instrument_name;  
+	   	this.name_variations = name_variations;
     }
     public Instrument (String instrument_name){
  	   	this.instrument_name = instrument_name;   	
     }     
-
+    
+	public String getName_variations() {
+		return name_variations;
+	}
+	public void setName_variations(String name_variations) {
+		this.name_variations = name_variations;
+	}
 	public int getInstrument_id() {
 		return instrument_id;
 	}

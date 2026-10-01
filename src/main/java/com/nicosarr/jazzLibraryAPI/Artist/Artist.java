@@ -35,6 +35,9 @@ public class Artist {
 
     @Column(name = "artist_name")
     private String artist_name;
+    
+    @Column(columnDefinition = "TEXT") 
+    private String name_variations; // JSON array
 
     @Column(name = "artist_fullname")
     private String artist_fullname;
@@ -72,6 +75,9 @@ public class Artist {
     
     @Column(name = "wikidata_id")
 	private String wikidata_id;
+    
+	@Column(columnDefinition = "TEXT")
+	private String bands_under_this_artist; // JSON array
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -97,7 +103,8 @@ public class Artist {
     public Artist(int artist_id, String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                   String thumbnail_url, String image_author, String image_license, 
-                  String image_source_url, String wikipedia_data, String wikidata_id, String artist_fullname) {
+                  String image_source_url, String wikipedia_data, String wikidata_id, String artist_fullname,
+                  String bands_under_this_artist, String name_variations ) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -114,12 +121,15 @@ public class Artist {
         this.wikipedia_data = wikipedia_data;
 		this.wikidata_id = wikidata_id;
 		this.artist_fullname = artist_fullname;
+		this.bands_under_this_artist = bands_under_this_artist;
+		this.name_variations = name_variations;
     }
 
     public Artist(String artist_name, String artist_surname, int instrument_id, Integer artist_rank,
                   String musicbrainz_uuid, String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                   String thumbnail_url, String image_author, String image_license, String image_source_url, 
-                  String wikipedia_data, String wikidata_id, String artist_fullname) {
+                  String wikipedia_data, String wikidata_id, String artist_fullname, 
+                  String bands_under_this_artist) {
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
         this.instrument_id = instrument_id;	   	
@@ -133,6 +143,10 @@ public class Artist {
         this.image_license = image_license;
         this.image_source_url = image_source_url;
         this.wikipedia_data = wikipedia_data;
+		this.wikidata_id = wikidata_id;
+		this.artist_fullname = artist_fullname;
+		this.bands_under_this_artist = bands_under_this_artist;
+        
     }
 
     // Keep the simpler constructor for cases where you don't have image data
@@ -141,6 +155,19 @@ public class Artist {
         this.artist_surname = artist_surname;
         this.instrument_id = instrument_id;	   	
         this.artist_rank = 0;		
+    }
+    
+    // Keep the simpler constructor for cases where you don't have image data
+    public Artist(String artist_name, String artist_surname, int instrument_id, Integer discogs_id,
+    			  String wikipedia_url, String wikipedia_data, String wikidata_id) {
+        this.artist_name = artist_name;
+        this.artist_surname = artist_surname;
+        this.instrument_id = instrument_id;	   	
+        this.discogs_id = discogs_id;
+        this.artist_rank = 0;		
+        this.wikipedia_url = wikipedia_url;
+        this.wikipedia_data = wikipedia_data;
+        this.wikidata_id = wikidata_id;
     }
 
     // Getters and setters (existing + new ones)
@@ -222,7 +249,23 @@ public class Artist {
 	public void setWikidata_id(String wikidata_id) {
 	    this.wikidata_id = wikidata_id;
 	}
-	
+		
+	public String getName_variations() {
+		return name_variations;
+	}
+
+	public void setName_variations(String name_variations) {
+		this.name_variations = name_variations;
+	}
+
+	public String getBands_under_this_artist() {
+		return bands_under_this_artist;
+	}
+
+	public void setBands_under_this_artist(String bands_under_this_artist) {
+		this.bands_under_this_artist = bands_under_this_artist;
+	}
+
 	@Override
     public String toString() {
         return "Artist [artist_id=" + artist_id + ", discogs_id=" + discogs_id + ", artist_name=" + artist_name

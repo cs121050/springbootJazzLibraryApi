@@ -25,6 +25,8 @@
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (11, 'Trombone');
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (12, 'Journalism');
 	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (13, 'other');
+	INSERT INTO Instrument (instrument_id, instrument_name) VALUES (99, 'NA');
+
 	
 	SELECT setval('instrument_instrument_id_seq', (SELECT max(instrument_id) FROM instrument));
 

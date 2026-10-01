@@ -29,6 +29,8 @@
 	INSERT [dbo].[Instrument] ([instrument_id], [instrument_name]) VALUES (11, N'trombone')
 	INSERT [dbo].[Instrument] ([instrument_id], [instrument_name]) VALUES (12, N'journalism')
 	INSERT [dbo].[Instrument] ([instrument_id], [instrument_name]) VALUES (13, N'other')
+	INSERT [dbo].[Instrument] ([instrument_id], [instrument_name]) VALUES (99, N'NA')
+
 	
 	SET IDENTITY_INSERT instrument OFF;
 	DBCC CHECKIDENT ('instrument', RESEED);
