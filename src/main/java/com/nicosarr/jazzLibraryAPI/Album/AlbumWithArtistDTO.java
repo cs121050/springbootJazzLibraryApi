@@ -63,7 +63,9 @@ public class AlbumWithArtistDTO extends AlbumDTO {
                         aca.getArtist().getImage_source_url(),
                         aca.getArtist().getWikipedia_data(),
                         aca.getArtist().getWikidata_id(),
-                        aca.getArtist().getArtist_fullname()
+                        aca.getArtist().getArtist_fullname(),
+                        aca.getArtist().getName_variations(),
+                        aca.getArtist().getBands_under_this_artist()
                     );
                     dto.getArtists().add(artistDTO);
                 }

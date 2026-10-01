@@ -18,6 +18,8 @@ public class ArtistDTO {
     private String image_source_url;
     private String wikipedia_data;
     private String wikidata_id;
+    private String name_variations;
+    private String bands_under_this_artist;
 
     public ArtistDTO() {}
 
@@ -26,7 +28,7 @@ public class ArtistDTO {
                      String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
                      String thumbnail_url, String image_author, String image_license,
                      String image_source_url, String wikipedia_data, String wikidata_id, 
-                     String artist_fullname) {
+                     String artist_fullname, String name_variations, String bands_under_this_artist) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -43,6 +45,8 @@ public class ArtistDTO {
         this.wikipedia_data = wikipedia_data;
         this.wikidata_id = wikidata_id;
         this.artist_fullname = artist_fullname;
+        this.name_variations = name_variations;
+        this.bands_under_this_artist = bands_under_this_artist;
     }
 
     public static ArtistDTO fromEntity(Artist artist) {
@@ -62,7 +66,9 @@ public class ArtistDTO {
             artist.getImage_source_url(),
             artist.getWikipedia_data(),
             artist.getWikidata_id(),
-            artist.getArtist_fullname()
+            artist.getArtist_fullname(),
+            artist.getName_variations(),
+            artist.getBands_under_this_artist()
         );
     }
 
@@ -109,6 +115,24 @@ public class ArtistDTO {
     public String getArtist_fullname() { return artist_fullname; }
     public void setArtist_fullname(String artist_fullname) { this.artist_fullname = artist_fullname; }
     
+    
+    
+	public String getName_variations() {
+		return name_variations;
+	}
+
+	public void setName_variations(String name_variations) {
+		this.name_variations = name_variations;
+	}
+
+	public String getBands_under_this_artist() {
+		return bands_under_this_artist;
+	}
+
+	public void setBands_under_this_artist(String bands_under_this_artist) {
+		this.bands_under_this_artist = bands_under_this_artist;
+	}
+
 	public String getWikipedia_data() {
 		return wikipedia_data;
 	}
