@@ -10,7 +10,7 @@ public class SongDTO {
     private String duration;
     private String yt_videoid;
     private String video_availability;
-    private String writer;              // JSON array
+    //private String writer;              // JSON array
 
     public SongDTO() {}
 
@@ -28,7 +28,7 @@ public class SongDTO {
         dto.setDuration(song.getDuration());
         dto.setYt_videoid(song.getYtVideoId());
         dto.setVideo_availability(song.getVideo_availability());
-        dto.setWriter(song.getWriter());
+        //dto.setWriter(song.getWriter());
         return dto;
     }
 
@@ -39,16 +39,6 @@ public class SongDTO {
 
     public int getMain_artist_id() { return main_artist_id; }
     public void setMain_artist_id(int main_artist_id) { this.main_artist_id = main_artist_id; }
-
-    
-    
-    public String getWriter() {
-		return writer;
-	}
-
-	public void setWriter(String writer) {
-		this.writer = writer;
-	}
 
 	public String getRelated_artists() { return related_artists; }
     public void setRelated_artists(String related_artists) { this.related_artists = related_artists; }
