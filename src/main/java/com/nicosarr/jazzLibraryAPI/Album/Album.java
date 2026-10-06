@@ -40,15 +40,13 @@ public class Album {
 	private String date_added;
 	private String date_changed;
 
-	@Column(length = 500, columnDefinition = "NVARCHAR(500)")
+	@Column(length = 500)
 	private String title;
 
-	@Column(name = "wikipedia_url",
-	        length = 500,
-	        columnDefinition = "NVARCHAR(500)")
+	@Column(name = "wikipedia_url", length = 500)
 	private String wikipedia_url;
 	
-	@Column(name = "raw_wikipedia_url", columnDefinition = "NVARCHAR(MAX)")
+	@Column(name = "raw_wikipedia_url", columnDefinition = "TEXT")
 	private String raw_wikipedia_url;
 	
 	@Column(name = "wikidata_id")
