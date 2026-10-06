@@ -66,8 +66,9 @@
 	    }
 	    
 	    public List<ArtistDTO> retrieveAllAvailable() {
-	        String jpql = "SELECT a FROM Artist a WHERE a.instrument_id != 99 " +
-	                      "ORDER BY a.artist_id";
+	        String jpql = "SELECT a FROM Artist a " + 
+	        			  " WHERE a.instrument.instrument_id <> 99 " +
+	                      " ORDER BY a.artist_id";
 	        
 	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);
 	        List<Artist> artists = query.getResultList();
