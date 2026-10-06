@@ -24,7 +24,7 @@ public class AlbumContainsArtistRep {
     public List<AlbumContainsArtistDTO> retrieveAllAvailable() {
         String jpql = "SELECT aca FROM AlbumContainsArtist aca " +
                       "JOIN aca.artist a " +
-                      "WHERE a.instrument_id <> 99";
+                      "WHERE a.instrument.instrument_id <> 99";
         TypedQuery<AlbumContainsArtist> query = entityManager.createQuery(jpql, AlbumContainsArtist.class);
         List<AlbumContainsArtist> list = query.getResultList();
         return list.stream()
