@@ -57,15 +57,15 @@ public class AlbumWithArtistDTO extends AlbumDTO {
                         aca.getArtist().getSpotify_playlist_id(),
                         aca.getArtist().getDiscogs_id(),
                         aca.getArtist().getWikipedia_url(),
-                        aca.getArtist().getThumbnail_url(),
-                        aca.getArtist().getImage_author(),
-                        aca.getArtist().getImage_license(),
-                        aca.getArtist().getImage_source_url(),
+                        //aca.getArtist().getThumbnail_url(),
+                        //aca.getArtist().getImage_author(),
+                        //aca.getArtist().getImage_license(),
+                        //aca.getArtist().getImage_source_url(),
                         aca.getArtist().getWikipedia_data(),
-                        aca.getArtist().getWikidata_id(),
-                        aca.getArtist().getArtist_fullname(),
-                        aca.getArtist().getName_variations(),
-                        aca.getArtist().getBands_under_this_artist()
+                        aca.getArtist().getWikidata_id()
+                        //aca.getArtist().getArtist_fullname(),
+                        //aca.getArtist().getName_variations(),
+                        //aca.getArtist().getBands_under_this_artist()
                     );
                     dto.getArtists().add(artistDTO);
                 }

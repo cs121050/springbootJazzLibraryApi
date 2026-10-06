@@ -5,23 +5,19 @@ public class InstrumentDTO {
 	private int instrument_id;
 	private String instrument_name;
 
-	private String name_variations; 
+	//private String name_variations; 
 	
 	// Constructors
 	public InstrumentDTO() {}
 
-	public InstrumentDTO(int instrument_id, String instrument_name, String name_variations) {
+	public InstrumentDTO(int instrument_id) {
 		this.instrument_id = instrument_id;
-		this.instrument_name = instrument_name;
-		this.name_variations = name_variations;
 	}
 
 	// Static factory method to convert from Entity
 	public static InstrumentDTO fromEntity(Instrument instrument) {
 		return new InstrumentDTO(
-			instrument.getInstrument_id(),
-			instrument.getInstrument_name(),
-			instrument.getName_variations()
+			instrument.getInstrument_id()
 		);
 	}
 
@@ -36,16 +32,6 @@ public class InstrumentDTO {
 
 	public String getInstrument_name() {
 		return instrument_name;
-	}
-
-	
-	
-	public String getName_variations() {
-		return name_variations;
-	}
-
-	public void setName_variations(String name_variations) {
-		this.name_variations = name_variations;
 	}
 
 	public void setInstrument_name(String instrument_name) {

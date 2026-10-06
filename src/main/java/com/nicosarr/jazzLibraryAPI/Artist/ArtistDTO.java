@@ -11,24 +11,26 @@ public class ArtistDTO {
     private Integer discogs_id;
     private String wikipedia_url;
     // New fields
-    private String artist_fullname;
-    private String thumbnail_url;
-    private String image_author;
-    private String image_license;
-    private String image_source_url;
+    //private String artist_fullname;
+    //private String thumbnail_url;
+    //private String image_author;
+    //private String image_license;
+    //private String image_source_url;
     private String wikipedia_data;
     private String wikidata_id;
-    private String name_variations;
-    private String bands_under_this_artist;
+    //private String name_variations;
+    //private String bands_under_this_artist;
 
     public ArtistDTO() {}
 
     public ArtistDTO(int artist_id, String artist_name, String artist_surname, 
                      Integer artist_rank, int instrument_id, String musicbrainz_uuid,
                      String spotify_playlist_id, Integer discogs_id, String wikipedia_url,
-                     String thumbnail_url, String image_author, String image_license,
-                     String image_source_url, String wikipedia_data, String wikidata_id, 
-                     String artist_fullname, String name_variations, String bands_under_this_artist) {
+                     String wikipedia_data, String wikidata_id
+					//String name_variations, String bands_under_this_artist,
+					//String image_author, String image_license,
+					//String image_source_url, String artist_fullname, String thumbnail_url
+                     ) {
         this.artist_id = artist_id;
         this.artist_name = artist_name;
         this.artist_surname = artist_surname;
@@ -38,15 +40,15 @@ public class ArtistDTO {
         this.spotify_playlist_id = spotify_playlist_id;
         this.discogs_id = discogs_id;
         this.wikipedia_url = wikipedia_url;
-        this.thumbnail_url = thumbnail_url;
-        this.image_author = image_author;
-        this.image_license = image_license;
-        this.image_source_url = image_source_url;
+        //this.thumbnail_url = thumbnail_url;
+        //this.image_author = image_author;
+        //this.image_license = image_license;
+        //this.image_source_url = image_source_url;
         this.wikipedia_data = wikipedia_data;
         this.wikidata_id = wikidata_id;
-        this.artist_fullname = artist_fullname;
-        this.name_variations = name_variations;
-        this.bands_under_this_artist = bands_under_this_artist;
+        //this.artist_fullname = artist_fullname;
+        //this.name_variations = name_variations;
+        //this.bands_under_this_artist = bands_under_this_artist;
     }
 
     public static ArtistDTO fromEntity(Artist artist) {
@@ -60,15 +62,15 @@ public class ArtistDTO {
             artist.getSpotify_playlist_id(),
             artist.getDiscogs_id(),
             artist.getWikipedia_url(),
-            artist.getThumbnail_url(),
-            artist.getImage_author(),
-            artist.getImage_license(),
-            artist.getImage_source_url(),
+            //artist.getThumbnail_url(),
+            //artist.getImage_author(),
+            //artist.getImage_license(),
+            //artist.getImage_source_url(),
             artist.getWikipedia_data(),
-            artist.getWikidata_id(),
-            artist.getArtist_fullname(),
-            artist.getName_variations(),
-            artist.getBands_under_this_artist()
+            artist.getWikidata_id()
+            //artist.getArtist_fullname(),
+            //artist.getName_variations(),
+            //artist.getBands_under_this_artist()
         );
     }
 
@@ -99,39 +101,6 @@ public class ArtistDTO {
 
     public String getWikipedia_url() { return wikipedia_url; }
     public void setWikipedia_url(String wikipedia_url) { this.wikipedia_url = wikipedia_url; }
-
-    public String getThumbnail_url() { return thumbnail_url; }
-    public void setThumbnail_url(String thumbnail_url) { this.thumbnail_url = thumbnail_url; }
-
-    public String getImage_author() { return image_author; }
-    public void setImage_author(String image_author) { this.image_author = image_author; }
-
-    public String getImage_license() { return image_license; }
-    public void setImage_license(String image_license) { this.image_license = image_license; }
-
-    public String getImage_source_url() { return image_source_url; }
-    public void setImage_source_url(String image_source_url) { this.image_source_url = image_source_url; }
-
-    public String getArtist_fullname() { return artist_fullname; }
-    public void setArtist_fullname(String artist_fullname) { this.artist_fullname = artist_fullname; }
-    
-    
-    
-	public String getName_variations() {
-		return name_variations;
-	}
-
-	public void setName_variations(String name_variations) {
-		this.name_variations = name_variations;
-	}
-
-	public String getBands_under_this_artist() {
-		return bands_under_this_artist;
-	}
-
-	public void setBands_under_this_artist(String bands_under_this_artist) {
-		this.bands_under_this_artist = bands_under_this_artist;
-	}
 
 	public String getWikipedia_data() {
 		return wikipedia_data;

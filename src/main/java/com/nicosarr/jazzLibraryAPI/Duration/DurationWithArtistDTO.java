@@ -42,15 +42,15 @@ public class DurationWithArtistDTO {
                                 vca.getArtist().getSpotify_playlist_id(),
                                 vca.getArtist().getDiscogs_id(),
                                 vca.getArtist().getWikipedia_url(),
-                                vca.getArtist().getThumbnail_url(),
-                                vca.getArtist().getImage_author(),
-                                vca.getArtist().getImage_license(),
-                                vca.getArtist().getImage_source_url(),
+                                //vca.getArtist().getThumbnail_url(),
+                                //vca.getArtist().getImage_author(),
+                                //vca.getArtist().getImage_license(),
+                                //vca.getArtist().getImage_source_url(),
                                 vca.getArtist().getWikipedia_data(),
-                                vca.getArtist().getWikidata_id(),
-                                vca.getArtist().getArtist_fullname(),
-                                vca.getArtist().getName_variations(),
-                                vca.getArtist().getBands_under_this_artist()
+                                vca.getArtist().getWikidata_id()
+                                //vca.getArtist().getArtist_fullname(),
+                                //vca.getArtist().getName_variations(),
+                                //vca.getArtist().getBands_under_this_artist()
                                 
                             );
                             allArtists.add(artistDTO);
