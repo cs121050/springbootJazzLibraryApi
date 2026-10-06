@@ -22,12 +22,14 @@ public class AlbumContainsArtistRep {
     }
     
     public List<AlbumContainsArtistDTO> retrieveAllAvailable() {
-        String jpql = "SELECT * FROM AlbumContainsArtist aca" + 
-    				  "inner join artist a on a.artist_id = aca.artist_id" +
-        			  "where  a.instrument_id != 99";		
+        String jpql = "SELECT aca FROM AlbumContainsArtist aca " +
+                      "JOIN aca.artist a " +
+                      "WHERE a.instrument_id <> 99";
         TypedQuery<AlbumContainsArtist> query = entityManager.createQuery(jpql, AlbumContainsArtist.class);
         List<AlbumContainsArtist> list = query.getResultList();
-        return list.stream().map(AlbumContainsArtistDTO::fromEntity).collect(Collectors.toList());
+        return list.stream()
+                   .map(AlbumContainsArtistDTO::fromEntity)
+                   .collect(Collectors.toList());
     }
 
     //TODO// Save a new association
