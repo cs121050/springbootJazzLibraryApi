@@ -80,12 +80,12 @@ public class BootStrapCntr {
         List<InstrumentDTO> instrumentDTOs = instrumentRepository.retrieveAll();
         List<TypeDTO> typeDTOs = typeRepository.retrieveAll();
         List<DurationDTO> durationDTOs = durationRepository.retrieveAll();
-        List<ArtistDTO> artistDTOs = artistRepository.retrieveAll();
+        List<ArtistDTO> artistDTOs = artistRepository.retrieveAllAvailable();
         List<QuoteDTO> quoteDTOs = quoteRepository.retrieveAll();
         List<VideoDTO> videoDTOs = videoRepository.retrieveAll();
         List<VideoContainsArtistDTO> videoContainsArtistDTOs = videoContainsArtistRepository.retrieveAll();
         List<AlbumDTO> albumDTOs = albumRepository.retrieveAll();
-        List<AlbumContainsArtistDTO> albumContainsArtistDTOs = albumContainsArtistRepository.retrieveAll();
+        List<AlbumContainsArtistDTO> albumContainsArtistDTOs = albumContainsArtistRepository.retrieveAllAvailable();
         List<SongDTO> songDTOs = songRepository.retrieveAll();
         
         // Create and return bootstrap DTO
