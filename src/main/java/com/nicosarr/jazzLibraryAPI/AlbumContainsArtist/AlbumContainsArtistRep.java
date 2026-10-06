@@ -20,6 +20,15 @@ public class AlbumContainsArtistRep {
         List<AlbumContainsArtist> list = query.getResultList();
         return list.stream().map(AlbumContainsArtistDTO::fromEntity).collect(Collectors.toList());
     }
+    
+    public List<AlbumContainsArtistDTO> retrieveAllAvailable() {
+        String jpql = "SELECT * FROM AlbumContainsArtist aca" + 
+    				  "inner join artist a on a.artist_id = aca.artist_id" +
+        			  "where  a.instrument_id != 99";		
+        TypedQuery<AlbumContainsArtist> query = entityManager.createQuery(jpql, AlbumContainsArtist.class);
+        List<AlbumContainsArtist> list = query.getResultList();
+        return list.stream().map(AlbumContainsArtistDTO::fromEntity).collect(Collectors.toList());
+    }
 
     //TODO// Save a new association
 

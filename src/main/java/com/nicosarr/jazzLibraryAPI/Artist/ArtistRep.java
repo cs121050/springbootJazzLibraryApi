@@ -65,6 +65,19 @@
 	            .collect(Collectors.toList());
 	    }
 	    
+	    public List<ArtistDTO> retrieveAllAvailable() {
+	        String jpql = "SELECT a FROM Artist a WHERE a.instrument_id != 99 " +
+	                      "ORDER BY a.artist_id";
+	        
+	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);
+	        List<Artist> artists = query.getResultList();
+	        
+	        // Convert entities to DTOs
+	        return artists.stream()
+	            .map(ArtistDTO::fromEntity)
+	            .collect(Collectors.toList());
+	    }
+	    
 	    /**
 	     * Returns all artists that have a non‑null and non‑empty musicbrainz_uuid.
 	     */
