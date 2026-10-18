@@ -1,3 +1,4 @@
--- DROP SCHEMA public;
+-- PostgreSQL creates the "public" schema automatically.
+-- Do not attempt to (re)create it in a migration.
 
-CREATE SCHEMA public AUTHORIZATION pg_database_owner;
+CREATE SCHEMA IF NOT EXISTS public;
