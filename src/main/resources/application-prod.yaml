@@ -10,6 +10,8 @@ spring:
     locations: classpath:db/migration
     # Enable streaming mode to handle the 152MB seed file without memory issues.
     stream: true
+    baseline-on-migrate: true
+    baseline-version: 0
 
   jpa:
     hibernate:
