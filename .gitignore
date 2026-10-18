@@ -39,4 +39,6 @@ build/
 s e r v i c e - a c c o u n t . j s o n 
 src/main/resources/service-account.json 
  s r c / m a i n / r e s o u r c e s / s e r v i c e - a c c o u n t . j s o n  
- 
+ # Dev-only sample migrations (local reset workflow)
+src/main/resources/migration-dev/*
+!src/main/resources/migration-dev/.gitkeep

@@ -92,6 +92,25 @@
 		    <version>1.17.2</version>
 		</dependency>
 				
+				
+				<!-- Flyway core engine -->
+		<dependency>
+		    <groupId>org.flywaydb</groupId>
+		    <artifactId>flyway-core</artifactId>
+		</dependency>
+		
+		<!-- Flyway support for PostgreSQL (used in prod profile) -->
+		<dependency>
+		    <groupId>org.flywaydb</groupId>
+		    <artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		
+		<!-- Flyway support for SQL Server (used in dev profile) -->
+		<dependency>
+		    <groupId>org.flywaydb</groupId>
+		    <artifactId>flyway-sqlserver</artifactId>
+		</dependency>
+				
 	</dependencies>
 
 	<build>

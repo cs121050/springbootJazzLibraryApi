@@ -5,21 +5,27 @@ spring:
     password: ${DB_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
+  flyway:
+    # The standard location for your production migrations.
+    locations: classpath:db/migration
+    # Enable streaming mode to handle the 152MB seed file without memory issues.
+    stream: true
+
   jpa:
     hibernate:
-      ddl-auto: create  # This creates tables from entities
+      ddl-auto: validate   # This creates tables from entities
       naming:
         physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
     show-sql: false
     open-in-view: false
-    defer-datasource-initialization: true  # Wait for JPA to create tables first
+    #defer-datasource-initialization: true  # Wait for JPA to create tables first
   
   sql:
     init:
-      mode: always
-      data-locations: classpath:data_prod.sql
-      continue-on-error: true   
-      platform: postgresql  # Add this!
+      mode: never
+      #data-locations: classpath:data_prod.sql
+      #continue-on-error: true   
+      #platform: postgresql  # Add this!
 
   transaction:
     default-timeout: 90  # Transaction timeout in seconds
