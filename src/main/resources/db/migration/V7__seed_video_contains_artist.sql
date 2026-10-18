@@ -800,7 +800,6 @@ INSERT INTO videocontainsartist (video_id, artist_id) VALUES (1, 5);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (793, 276);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (794, 276);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (795, 276);
-	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (795, 340);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (796, 35);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (797, 35);
 	INSERT INTO videocontainsartist (video_id, artist_id) VALUES (798, 35);
