@@ -29,10 +29,12 @@ import com.nicosarr.jazzLibraryAPI.Duration.Duration;
 import com.nicosarr.jazzLibraryAPI.Quote.Quote;
 import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
 
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
+
 @Entity
 @Table(name = "Video")  // database tables
 @JacksonXmlRootElement(localName = "video")
-public class Video {
+public class Video extends BaseAuditEntity {
 
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	

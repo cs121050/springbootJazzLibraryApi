@@ -3,11 +3,13 @@ package com.nicosarr.jazzLibraryAPI.Song;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.nicosarr.jazzLibraryAPI.Album.Album;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
+
 import jakarta.persistence.*;
 
 @Entity
 @Table(name = "song")
-public class Song {
+public class Song extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
