@@ -16,6 +16,7 @@ import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import jakarta.persistence.*;
 
 import com.nicosarr.jazzLibraryAPI.Video.Video;
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
 import com.nicosarr.jazzLibraryAPI.Instrument.Instrument;
 import com.nicosarr.jazzLibraryAPI.Quote.Quote;
 import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
@@ -23,7 +24,7 @@ import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtist;
 @Entity
 @Table(name = "Artist")
 @JacksonXmlRootElement(localName = "artist")
-public class Artist {
+public class Artist extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

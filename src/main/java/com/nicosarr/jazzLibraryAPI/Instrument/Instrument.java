@@ -16,11 +16,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.OneToMany;
 
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
 
 @Entity
 @Table(name = "Instrument")  // database tables
 @JacksonXmlRootElement(localName = "instrument")
-public class Instrument {
+public class Instrument extends BaseAuditEntity {
     
 	@Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	

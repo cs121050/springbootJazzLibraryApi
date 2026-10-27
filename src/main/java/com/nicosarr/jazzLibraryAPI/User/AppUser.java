@@ -3,9 +3,11 @@ package com.nicosarr.jazzLibraryAPI.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
+
 @Entity
 @Table(name = "AppUser")
-public class AppUser {
+public class AppUser extends BaseAuditEntity {
 
     @Id
     @Column(name = "firebase_uid", length = 128)

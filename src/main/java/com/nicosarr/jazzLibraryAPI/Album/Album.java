@@ -6,10 +6,11 @@ import java.util.List;
 import com.nicosarr.jazzLibraryAPI.Song.Song;
 
 import com.nicosarr.jazzLibraryAPI.AlbumContainsArtist.AlbumContainsArtist;
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
 
 @Entity
 @Table(name = "Album")
-public class Album {
+public class Album extends BaseAuditEntity {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)

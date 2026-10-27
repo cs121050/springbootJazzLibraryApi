@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlRootElement;
 import com.nicosarr.jazzLibraryAPI.Artist.Artist;
+import com.nicosarr.jazzLibraryAPI.Audit.BaseAuditEntity;
 import com.nicosarr.jazzLibraryAPI.Video.Video;
 import com.nicosarr.jazzLibraryAPI.Instrument.Instrument;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,7 +25,7 @@ import jakarta.persistence.Transient;
 @Entity
 @Table(name = "Quote")  // database tables
 @JacksonXmlRootElement(localName = "quote")
-public class Quote {
+public class Quote extends BaseAuditEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // Use IDENTITY if your DB supports auto-increment	
