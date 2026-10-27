@@ -8,8 +8,6 @@ spring:
   flyway:
     # The standard location for your production migrations.
     locations: classpath:db/migration
-    # Enable streaming mode to handle the 152MB seed file without memory issues.
-    stream: true
     baseline-on-migrate: true
     baseline-version: 0
 
@@ -35,3 +33,7 @@ spring:
 
 server:
   port: ${PORT:8080}
+  compression:
+    enabled: true
+    mime-types: application/json,application/xml,text/html,text/plain,text/css,text/javascript,application/javascript
+    min-response-size: 1024
