@@ -1,6 +1,6 @@
 -- Postgres 11+: ADD COLUMN with DEFAULT is metadata-only (instant, no rewrite, no lock).
 -- Table names are double-quoted because you use PhysicalNamingStrategyStandardImpl
--- (so Hibernate stored them as "Album", "Artist", ... — case-sensitive).
+-- (so Hibernate stored them as "Album", "Artist", ... â€” case-sensitive).
 
 ALTER TABLE "Album"
   ADD COLUMN created    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -57,6 +57,12 @@ ALTER TABLE "Song"
   ADD COLUMN updated_by VARCHAR(100) DEFAULT 'systemboot';
 
 ALTER TABLE "Quote"
+  ADD COLUMN created    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN updated    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  ADD COLUMN created_by VARCHAR(100) DEFAULT 'systemboot',
+  ADD COLUMN updated_by VARCHAR(100) DEFAULT 'systemboot';
+
+ALTER TABLE "AppUser"
   ADD COLUMN created    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN updated    TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN created_by VARCHAR(100) DEFAULT 'systemboot',
