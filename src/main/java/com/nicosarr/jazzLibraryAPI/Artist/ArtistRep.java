@@ -200,4 +200,20 @@
 	    
 	    
 	    
+	    @Transactional(readOnly = true)
+	    public List<ArtistDTO> retrievePageAfterArtistId(long cursor, int limit) {
+	        String jpql = "SELECT a FROM Artist a WHERE a.artist_id > :cursor ORDER BY a.artist_id ASC";
+	        TypedQuery<Artist> query = entityManager.createQuery(jpql, Artist.class);
+	        query.setParameter("cursor", (int) cursor);
+	        query.setMaxResults(limit);
+	        return query.getResultList().stream()
+	                .map(ArtistDTO::fromEntity)
+	                .collect(Collectors.toList());
+	    }
+
+	    @Transactional(readOnly = true)
+	    public long count() {
+	        return entityManager.createQuery("SELECT COUNT(a) FROM Artist a", Long.class).getSingleResult();
+	    }
+	    
 }

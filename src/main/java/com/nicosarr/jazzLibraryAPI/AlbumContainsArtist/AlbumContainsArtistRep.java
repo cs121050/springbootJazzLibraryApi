@@ -1,6 +1,8 @@
 package com.nicosarr.jazzLibraryAPI.AlbumContainsArtist;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -31,6 +33,35 @@ public class AlbumContainsArtistRep {
                    .map(AlbumContainsArtistDTO::fromEntity)
                    .collect(Collectors.toList());
     }
+    
+    
+    @Transactional(readOnly = true)
+    public List<AlbumContainsArtistDTO> retrievePageAfterKey(
+            long cursorAlbumId, long cursorArtistId, int limit) {
+
+        String jpql =
+            "SELECT aca FROM AlbumContainsArtist aca " +
+            "WHERE aca.id.albumId > :ca " +
+            "   OR (aca.id.albumId = :ca AND aca.id.artistId > :cart) " +
+            "ORDER BY aca.id.albumId ASC, aca.id.artistId ASC";
+
+        TypedQuery<AlbumContainsArtist> q =
+            entityManager.createQuery(jpql, AlbumContainsArtist.class);
+        q.setParameter("ca", (int) cursorAlbumId);
+        q.setParameter("cart", (int) cursorArtistId);
+        q.setMaxResults(limit);
+        return q.getResultList().stream()
+                .map(AlbumContainsArtistDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery(
+            "SELECT COUNT(aca) FROM AlbumContainsArtist aca", Long.class)
+            .getSingleResult();
+    }
+    
 
     //TODO// Save a new association
 

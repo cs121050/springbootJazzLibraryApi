@@ -53,6 +53,23 @@ public class AlbumRep {
         return albums.stream().map(AlbumWithArtistDTO::fromEntity).collect(Collectors.toList());
     }
     
+    
+    
+    @Transactional(readOnly = true)
+    public List<AlbumDTO> retrievePageAfterAlbumId(long cursor, int limit) {
+        String jpql = "SELECT a FROM Album a WHERE a.album_id > :cursor ORDER BY a.album_id ASC";
+        TypedQuery<Album> query = entityManager.createQuery(jpql, Album.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(AlbumDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery("SELECT COUNT(a) FROM Album a", Long.class).getSingleResult();
+    }
    
     
     //@Transactional(timeout = 3600)   // outer transaction (main job)

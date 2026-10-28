@@ -5,6 +5,7 @@ import java.util.List;
 
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.EntityManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +36,23 @@ public class InstrumentRep {
 	        dtoList.add(InstrumentDTO.fromEntity(inst));
 	    }
 	    return dtoList;
+    }
+    
+    
+    @Transactional(readOnly = true)
+    public List<InstrumentDTO> retrievePageAfterInstrumentId(long cursor, int limit) {
+        String jpql = "SELECT i FROM Instrument i WHERE i.instrument_id > :cursor ORDER BY i.instrument_id ASC";
+        TypedQuery<Instrument> query = entityManager.createQuery(jpql, Instrument.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(InstrumentDTO::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery("SELECT COUNT(i) FROM Instrument i", Long.class).getSingleResult();
     }
 //    
 //    public int create(Instrument instrument) { 

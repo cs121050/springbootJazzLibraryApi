@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
+import jakarta.persistence.TypedQuery;
 
 
 
@@ -33,6 +34,23 @@ public class TypeRep {
  	        .map(TypeDTO::fromEntity)
  	        .collect(java.util.stream.Collectors.toList());
 	}
+    
+    @Transactional(readOnly = true)
+    public List<TypeDTO> retrievePageAfterTypeId(long cursor, int limit) {
+        String jpql = "SELECT t FROM Type t WHERE t.type_id > :cursor ORDER BY t.type_id ASC";
+        TypedQuery<Type> query = entityManager.createQuery(jpql, Type.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(TypeDTO::fromEntity)
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery("SELECT COUNT(t) FROM Type t", Long.class).getSingleResult();
+    }
+    
 //
 //	public int create(Type type) { 
 //		String sql = "INSERT INTO Type (type_name, type_video_count) VALUES (?, ?)";
