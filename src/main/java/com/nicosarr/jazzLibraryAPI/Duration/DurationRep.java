@@ -94,6 +94,26 @@ public class DurationRep {
             .map(DurationWithArtistDTO::fromEntity)
             .collect(Collectors.toList());
     }
+    
+    
+    @Transactional(readOnly = true)
+    public List<DurationDTO> retrievePageAfterDurationId(long cursor, int limit) {
+        String jpql = "SELECT d FROM Duration d WHERE d.duration_id > :cursor ORDER BY d.duration_id ASC";
+        TypedQuery<Duration> query = entityManager.createQuery(jpql, Duration.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(DurationDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery("SELECT COUNT(d) FROM Duration d", Long.class).getSingleResult();
+    }
+    
+    
+    
 //    
 //    public int create(Duration duration) { 
 //    	String sql = "INSERT INTO Duration (duration_name, duration_video_count) VALUES (?, ?)";

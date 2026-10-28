@@ -4,6 +4,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,4 +49,30 @@ public class SongRep {
         query.setParameter("artistId", artistId);
         return query.getResultList().stream().map(SongDTO::fromEntity).collect(Collectors.toList());
     }
+
+    @Transactional(readOnly = true)
+    public List<SongDTO> retrievePageAfterSongId(long cursor, int limit) {
+        String jpql = "SELECT s FROM Song s " +
+                      "JOIN FETCH s.mainArtist " +
+                      "LEFT JOIN FETCH s.album " +
+                      "WHERE s.songId > :cursor " +
+                      "ORDER BY s.songId ASC";
+        TypedQuery<Song> query = entityManager.createQuery(jpql, Song.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(SongDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        // Mirrors the JOIN FETCH semantics below
+        return entityManager.createQuery(
+                "SELECT COUNT(s) FROM Song s WHERE s.mainArtist IS NOT NULL", Long.class)
+                .getSingleResult();
+    }
+
+
+
 }

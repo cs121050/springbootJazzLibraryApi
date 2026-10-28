@@ -1112,5 +1112,24 @@ public class VideoRep {
         return sb.toString();
     }
 
+    
+    
+    @Transactional(readOnly = true)
+    public List<VideoDTO> retrievePageAfterVideoId(long cursor, int limit) {
+        String jpql = "SELECT v FROM Video v WHERE v.video_id > :cursor ORDER BY v.video_id ASC";
+        TypedQuery<Video> query = entityManager.createQuery(jpql, Video.class);
+        query.setParameter("cursor", (int) cursor);
+        query.setMaxResults(limit);
+        return query.getResultList().stream()
+                .map(VideoDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public long count() {
+        return entityManager.createQuery("SELECT COUNT(v) FROM Video v", Long.class).getSingleResult();
+    }
+    
+    
 }
 
