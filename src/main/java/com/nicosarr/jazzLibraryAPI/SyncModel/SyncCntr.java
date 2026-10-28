@@ -72,7 +72,7 @@ public class SyncCntr {
     @GetMapping("/artists")
     public SyncPage<ArtistDTO> syncArtists(
             @RequestParam(defaultValue = "0") long cursor,
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "1000") int limit) {
         int l = clampLimit(limit);
         List<ArtistDTO> rows = artistRep.retrievePageAfterArtistId(cursor, l + 1);
         return buildPage(rows, l, d -> String.valueOf(d.getArtist_id()));
@@ -81,7 +81,7 @@ public class SyncCntr {
     @GetMapping("/videos")
     public SyncPage<VideoDTO> syncVideos(
             @RequestParam(defaultValue = "0") long cursor,
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "2000") int limit) {
         int l = clampLimit(limit);
         List<VideoDTO> rows = videoRep.retrievePageAfterVideoId(cursor, l + 1);
         return buildPage(rows, l, d -> String.valueOf(d.getVideo_id()));
@@ -119,7 +119,7 @@ public class SyncCntr {
     @GetMapping("/songs")
     public SyncPage<SongDTO> syncSongs(
             @RequestParam(defaultValue = "0") long cursor,
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "5000") int limit) {
         int l = clampLimit(limit);
         List<SongDTO> rows = songRep.retrievePageAfterSongId(cursor, l + 1);
         return buildPage(rows, l, d -> String.valueOf(d.getSong_id()));
@@ -130,7 +130,7 @@ public class SyncCntr {
     @GetMapping("/album-artists")
     public SyncPage<AlbumContainsArtistDTO> syncAlbumArtists(
             @RequestParam(defaultValue = "") String cursor,
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "5000") int limit) {
 
         int l = clampLimit(limit);
         long ca = 0, cart = 0;
@@ -148,7 +148,7 @@ public class SyncCntr {
     @GetMapping("/video-artists")
     public SyncPage<VideoContainsArtistDTO> syncVideoArtists(
             @RequestParam(defaultValue = "") String cursor,
-            @RequestParam(defaultValue = "500") int limit) {
+            @RequestParam(defaultValue = "5000") int limit) {
 
         int l = clampLimit(limit);
         long cv = 0, cart = 0;
