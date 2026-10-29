@@ -32,7 +32,7 @@ import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistRep;
 public class SyncCntr {
 
     private static final int DEFAULT_LIMIT = 500;
-    private static final int MAX_LIMIT     = 5000;
+    private static final int MAX_LIMIT     = 20000;
 
     @Autowired private AlbumRep                albumRep;
     @Autowired private ArtistRep               artistRep;
