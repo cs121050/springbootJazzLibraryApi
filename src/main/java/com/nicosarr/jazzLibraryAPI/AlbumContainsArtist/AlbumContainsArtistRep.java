@@ -41,8 +41,10 @@ public class AlbumContainsArtistRep {
 
         String jpql =
             "SELECT aca FROM AlbumContainsArtist aca " +
-            "WHERE aca.id.albumId > :ca " +
-            "   OR (aca.id.albumId = :ca AND aca.id.artistId > :cart) " +
+            "JOIN aca.artist a " +                                    // ← ADDED
+            "WHERE a.instrument.instrument_id <> 99 " +               // ← ADDED
+            "  AND (aca.id.albumId > :ca " +
+            "       OR (aca.id.albumId = :ca AND aca.id.artistId > :cart)) " +
             "ORDER BY aca.id.albumId ASC, aca.id.artistId ASC";
 
         TypedQuery<AlbumContainsArtist> q =
@@ -56,10 +58,12 @@ public class AlbumContainsArtistRep {
     }
 
     @Transactional(readOnly = true)
-    public long count() {
+    public long count() {   // ← CHANGED: same filter as page
         return entityManager.createQuery(
-            "SELECT COUNT(aca) FROM AlbumContainsArtist aca", Long.class)
-            .getSingleResult();
+                "SELECT COUNT(aca) FROM AlbumContainsArtist aca " +
+                "JOIN aca.artist a " +
+                "WHERE a.instrument.instrument_id <> 99",
+                Long.class).getSingleResult();
     }
     
 
