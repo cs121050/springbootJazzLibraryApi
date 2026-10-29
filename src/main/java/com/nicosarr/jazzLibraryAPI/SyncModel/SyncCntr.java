@@ -32,7 +32,7 @@ import com.nicosarr.jazzLibraryAPI.VideoContainsArtist.VideoContainsArtistRep;
 public class SyncCntr {
 
     private static final int DEFAULT_LIMIT = 500;
-    private static final int MAX_LIMIT     = 20000;
+    private static final int MAX_LIMIT     = 6000;
 
     @Autowired private AlbumRep                albumRep;
     @Autowired private ArtistRep               artistRep;
@@ -119,7 +119,7 @@ public class SyncCntr {
     @GetMapping("/songs")
     public SyncPage<SongDTO> syncSongs(
             @RequestParam(defaultValue = "0") long cursor,
-            @RequestParam(defaultValue = "10000") int limit) {
+            @RequestParam(defaultValue = "6000") int limit) {
         int l = clampLimit(limit);
         List<SongDTO> rows = songRep.retrievePageAfterSongId(cursor, l + 1);
         return buildPage(rows, l, d -> String.valueOf(d.getSong_id()));
